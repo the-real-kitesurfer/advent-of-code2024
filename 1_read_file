@@ -1,0 +1,17 @@
+import pandas as pd
+import ssl                # to be able to read the csv file saved on this repository
+import certifi            # to be able to read the csv file saved on this repository
+import urllib.request     # to be able to read the csv file saved on this repository
+
+context = ssl.create_default_context(cafile=certifi.where())
+
+# URL of the CSV file in your GitHub repository
+url = "https://raw.githubusercontent.com/agapasieka/cfg-project-group5/master/Olympics_2024.csv"
+response = urllib.request.urlopen(url, context=context)
+context = ssl.create_default_context(cafile=certifi.where())
+
+# Reading the CSV file directly from the URL
+df = pd.read_csv(url)
+
+# Displaying the first few rows of the dataframe
+print(df.head())

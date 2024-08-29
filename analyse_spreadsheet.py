@@ -43,7 +43,7 @@ def filter_data(user_input):
 user_input = ""
 while user_input != "exit":
     user_input = input("Enter the country to view olympic details (or 'exit' to quit):\n")
-    if user_input.lower() == "exit":
+    if user_input == "exit":
         break
     filtered_data = filter_data(user_input)
 

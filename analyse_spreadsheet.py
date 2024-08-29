@@ -18,10 +18,10 @@ def calculate_total_medals():
     total_medals_per_country = {}  # Defines variables for dictionaries
     for row in data:
         country = row['NOC']
-        total_medals = row['Total']
+        total_medals = int(row['Total'])   # Convert the total value to integer
         if country not in total_medals_per_country:
             total_medals_per_country[country] = 0
-        total_medals_per_country[country] += 1
+        total_medals_per_country[country] += total_medals  # Sum the medals
     return total_medals_per_country
 
 # Displays total number of medals per country from csv
@@ -33,7 +33,6 @@ for country, total_medals in results.items():
 
 # Filters the data based on the country name entered by user
 def filter_data(user_input):
-    data = read_data()
     filter_data_per_country = []
     for row in data:
         country = row['NOC'] = user_input

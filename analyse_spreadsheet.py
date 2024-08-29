@@ -38,7 +38,7 @@ def filter_data(user_input):
     for row in data:
         country = row['NOC'] = user_input
         filter_data_per_country = row
-        return filter_data_per_country
+    return filter_data_per_country
 
 user_input = ""
 while user_input != "exit":

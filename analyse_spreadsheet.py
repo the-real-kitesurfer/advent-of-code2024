@@ -1,10 +1,10 @@
 import csv
-
+from pprint import pprint
 
 # Reads a CSV file and returns a list of dictionaries
 def read_data():
     data = []
-    with open('Olympics_2024.csv', 'r') as csvfile:
+    with open('Olympics_2024.csv', 'r', encoding="utf-8-sig") as csvfile:
         spreadsheet = csv.DictReader(csvfile)
         for row in spreadsheet:
             data.append(row)
@@ -35,8 +35,9 @@ for country, total_medals in results.items():
 def filter_data(user_input):
     filter_data_per_country = []
     for row in data:
-        country = row['NOC'] = user_input
-        filter_data_per_country = row
+        country = row['NOC'].strip().lower()
+        if country == user_input.lower():
+            filter_data_per_country.append(row)
     return filter_data_per_country
 
 user_input = ""
@@ -46,4 +47,4 @@ while user_input != "exit":
         break
     filtered_data = filter_data(user_input)
 
-    print(filtered_data)
+    pprint(filtered_data)

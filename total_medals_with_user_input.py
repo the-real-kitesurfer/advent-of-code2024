@@ -1,5 +1,5 @@
-from pprint import pprint
 import helper
+from pprint import pprint
 
 data = helper.read_data()
 

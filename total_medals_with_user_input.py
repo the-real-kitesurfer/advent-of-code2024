@@ -1,4 +1,4 @@
-import pprint
+from pprint import pprint
 import helper
 
 data = helper.read_data()

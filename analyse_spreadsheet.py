@@ -3,9 +3,12 @@ import csv
 
 # Reads a CSV file and returns a list of dictionaries
 def read_data():
+    data = []
     with open('Olympics_2024.csv', 'r') as csvfile:
         spreadsheet = csv.DictReader(csvfile)
-        return list(spreadsheet)
+        for row in spreadsheet:
+            data.append(row)
+    return data
 
 data = read_data()
 # print(f'{data}')
@@ -30,17 +33,18 @@ for country, total_medals in results.items():
 
 # Filters the data based on the country name entered by user
 def filter_data(user_input):
-    filter_data_per_country = {}  # Define variable for dictionary
+    data = read_data()
+    filter_data_per_country = []
     for row in data:
-        country = row['NOC']
-        if country == user_input:
-            filter_data_per_country.get(row)
+        country = row['NOC'] = user_input
+        filter_data_per_country = row
         return filter_data_per_country
 
 user_input = ""
 while user_input != "exit":
     user_input = input("Enter the country to view olympic details (or 'exit' to quit):\n")
-
+    if user_input.lower() == "exit":
+        break
     filtered_data = filter_data(user_input)
 
     print(filtered_data)

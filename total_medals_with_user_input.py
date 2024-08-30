@@ -17,4 +17,7 @@ while user_input != "exit":
         break
     filtered_data = helper.filter_data(user_input)
 
-    pprint(filtered_data)
+    if filtered_data:
+        pprint(filtered_data)
+    else:
+        print("Invalid input or country not in csv, try again (or 'exit' to quit):\n")

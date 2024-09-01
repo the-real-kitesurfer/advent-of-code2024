@@ -1,6 +1,7 @@
 import csv
 # Reads a CSV file and returns a list of dictionaries
 from pprint import pprint
+from collections import defaultdict
 def read_data():
     data = []
     with open("Olympics_2024.csv", "r", encoding="utf-8-sig") as csvfile:
@@ -53,11 +54,19 @@ def filter_data(user_input):
             filter_data_per_country.append(row)
     return filter_data_per_country
 
-def top_ten():
-    sorted_data = sorted(data, key=lambda x: int(x["Total"]), reverse=True)
+def add_medals(data): # We need this to add all the "total medals" together or we get duplicates
+    medal_totals = defaultdict(int)
+    for row in data:
+        country = row['NOC'].strip().lower()
+        total_medals = int(row["Total"])
+        medal_totals[country] += total_medals
+    return medal_totals
+
+def top_ten(medal_totals):  # Determine the top ten medal-scoring countries in descending order
+    sorted_data = sorted(medal_totals.items(), key=lambda x: x[1], reverse=True)
 
     top_ten = sorted_data[:10]
 
     print("Top Ten Countries by Total Medals:\n")
-    for row in top_ten:
-        pprint(f"{row['NOC']}: {row['Total']}")
+    for country, total in top_ten:
+        pprint(f"{country}: {total}")

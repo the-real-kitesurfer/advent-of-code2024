@@ -52,3 +52,12 @@ def filter_data(user_input):
         if country == user_input.lower():
             filter_data_per_country.append(row)
     return filter_data_per_country
+
+def top_ten():
+    sorted_data = sorted(data, key=lambda x: int(x["Total"]), reverse=True)
+
+    top_ten = sorted_data[:10]
+
+    print("Top Ten Countries by Total Medals:\n")
+    for row in top_ten:
+        pprint(f"{row['NOC']}: {row['Total']}")

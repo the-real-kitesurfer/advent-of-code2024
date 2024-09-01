@@ -13,6 +13,7 @@ if menu_choice.lower() == "total":
 elif menu_choice.lower() == "country":
     helper_v2.country_details()
 elif menu_choice.lower() == "top":
-    helper_v2.top_ten()
+    medal_totals = helper_v2.add_medals(data)
+    helper_v2.top_ten(medal_totals)
 else:
     print("Input not recognised, please try again.")

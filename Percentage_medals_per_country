@@ -1,0 +1,60 @@
+import csv
+def read_data():
+    data = []
+    with open("Olympics_2024.csv", "r", encoding="utf-8-sig") as csvfile:
+        spreadsheet = csv.DictReader(csvfile)
+        for row in spreadsheet:
+            data.append(row)
+    return data
+
+data = read_data()
+
+# Function to sum all medals
+def sum_all_medals(data):
+    total_medals = 0
+    for row in data:
+        total_medals += int(row["Total"])  # Accumulate the total medals
+    return total_medals
+
+# Function to calculate percentage of medals per country
+def percentage_medals_per_country(data, total_medals):
+    total_medals_per_country = {}  # Initialize dictionary to store total medals per country
+
+    # Calculate total medals per country
+    for row in data:
+        country = row["NOC"]
+        medals = int(row["Total"])  # Convert the total value to integer
+        if country not in total_medals_per_country:
+            total_medals_per_country[country] = 0
+        total_medals_per_country[country] += medals  # Sum the medals
+
+    # Calculate the percentage of medals for each country
+    percentage_medals = {}
+    for country, medals in total_medals_per_country.items():
+        percentage_medals[country] = (medals / total_medals) * 100
+    return percentage_medals
+
+# Calculate the total medals
+total_medals = sum_all_medals(data)
+
+# Calculate the percentage of medals per country
+medal_percentages = percentage_medals_per_country(data, total_medals)
+
+# Print the percentage of medals per country
+for country, percentage in medal_percentages.items():
+    print(f"{country}: {percentage:.2f}% of total medals")
+
+# Function to sort countries by the percentage of medals
+def sort_by_percentage(percentage_medals):
+    # Convert dictionary to a list of tuples and sort by percentage in descending order
+    sorted_percentage = sorted(percentage_medals.items(), key=lambda x: x[1], reverse=True)
+    return sorted_percentage
+
+# Main execution
+total_medals = sum_all_medals(data)
+percentage_medals = percentage_medals_per_country(data, total_medals)
+sorted_percentage = sort_by_percentage(percentage_medals)
+
+# Print sorted percentages
+for country, percentage in sorted_percentage:
+    print(f"{country}: {percentage:.2f}%")

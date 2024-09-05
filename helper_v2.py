@@ -70,3 +70,12 @@ def top_ten(medal_totals):  # Determine the top ten medal-scoring countries in d
     print("Top Ten Countries by Total Medals:\n")
     for country, total in top_ten:
         pprint(f"{country}: {total}")
+
+def medal_percentages(medal_totals):
+    total_medals = sum(medal_totals.values())
+
+    print("Percentage of Total Medals Won by Each Country:\n")
+
+    for country, total in medal_totals.items():
+        percentage = (total / total_medals) * 100
+        print(f"{country}: {percentage:.2f}%")

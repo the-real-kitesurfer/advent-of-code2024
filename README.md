@@ -1,6 +1,7 @@
 # CFG Project Group 5 - Olympics 2024 Data Analysis
 <!-- Overview -->
 Overview
+
 This project analyzes data from the Olympics 2024. The script reads the dataset, processes key statistics, and generates insights on medal counts, athlete performance, and event details.
 <!-- Features -->
 Features

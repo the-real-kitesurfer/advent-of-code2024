@@ -4,9 +4,9 @@ Overview
 This project analyzes data from the Olympics 2024. The script reads the dataset, processes key statistics, and generates insights on medal counts, athlete performance, and event details.
 <!-- Features -->
 Features
-Data Reading: Loads Olympics 2024 data from a specified file.
-Data Analysis: Computes statistics including medal counts and performance metrics.
-Insights Generation: Provides summaries and visualizations of the data.
+*Data Reading: Loads Olympics 2024 data from a specified file.
+*Data Analysis: Computes statistics including medal counts and performance metrics.
+*Insights Generation: Provides summaries and visualizations of the data.
 <!-- Getting Started-->
 Getting Started
 1. Navigate to repository: https://github.com/agapasieka/cfg-project-group5

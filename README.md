@@ -11,8 +11,8 @@ Features
 Getting Started
 1. Navigate to repository: https://github.com/agapasieka/cfg-project-group5
 2. Launch Codespace:
-   * Click the green <> Code button at the top-right of the repository.
-   * Select the Codespaces tab.
+   * Click the green '<> Code' button at the top-right of the repository.
+   * Select the 'Codespaces' tab.
    * Click Create codespace on main (or select another branch if needed).
 3. Run the Python Code:
    ```

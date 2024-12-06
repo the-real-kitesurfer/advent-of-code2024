@@ -1,3 +1,3 @@
-import day5
+from day7 import solve
 
-day5.solve()
+solve()

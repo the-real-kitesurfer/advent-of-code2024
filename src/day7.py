@@ -90,4 +90,4 @@ def part2(useRealData):
 
 def solve():
   part1(True)
-  part2(False)
+  part2(True)

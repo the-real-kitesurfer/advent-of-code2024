@@ -18,13 +18,13 @@ def transform(input):
     testValues = []
     for number in splitLine[1].split(" "):
       if not number == '':
-        testValues.append(int(number))
+        testValues.append(number)
     equations.append([int(splitLine[0]), testValues])
 
   debug("equations: " + str(equations))
   return equations
 
-def countValidCombinations(testValue, partialResult, numbers):
+def countValidCombinations(testValue, partialResult, numbers, useThirdOperator):
   if len(numbers) == 0:
     if testValue == partialResult:
       return 1
@@ -34,12 +34,15 @@ def countValidCombinations(testValue, partialResult, numbers):
   if partialResult > testValue:
     return 0
 
-  return countValidCombinations(testValue, partialResult + numbers[0], numbers[1:]) + countValidCombinations(testValue, partialResult * numbers[0], numbers[1:])
+  if useThirdOperator:
+    return countValidCombinations(testValue, int(str(partialResult) + numbers[0]), numbers[1:], useThirdOperator) + countValidCombinations(testValue, partialResult + int(numbers[0]), numbers[1:], useThirdOperator) + countValidCombinations(testValue, partialResult * int(numbers[0]), numbers[1:], useThirdOperator)
+  else:
+    return countValidCombinations(testValue, partialResult + int(numbers[0]), numbers[1:], useThirdOperator) + countValidCombinations(testValue, partialResult * int(numbers[0]), numbers[1:], useThirdOperator)
 
-def findValidEquations(equations):
+def findValidEquations(equations, useThirdOperator):
   validEquations = []
   for equation in equations:
-    if countValidCombinations(equation[0], 0, equation[1]) > 0:
+    if countValidCombinations(equation[0], 0, equation[1], useThirdOperator) > 0:
       validEquations.append(equation)
   return validEquations
 
@@ -61,7 +64,7 @@ def part1(useRealData):
   equations = transform(input)
 
   print ("Finding valid equations")
-  validEquations = findValidEquations(equations)
+  validEquations = findValidEquations(equations, False)
 
   print("Found " + str(len(validEquations)) + " valid equations")
   
@@ -75,8 +78,16 @@ def part2(useRealData):
   else:
     input = fetchData('sample' + DAY + '.txt')
 
-  print("Result for part 2: " + '?')
+  print("Transforming input")
+  equations = transform(input)
+
+  print ("Finding valid equations")
+  validEquations = findValidEquations(equations, True)
+
+  print("Found " + str(len(validEquations)) + " valid equations: "+ str(validEquations))
+  
+  print("Result for part 2: " + str(sumOfTestValues(validEquations)))
 
 def solve():
   part1(True)
-  #part2(True)
+  part2(False)

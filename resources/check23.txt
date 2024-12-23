@@ -50,3 +50,24 @@ co-tc
 wh-qp
 tb-vc
 td-yn
+
+
+---
+
+Found 16 biggest set for n=3
+kh: [('qp', 'ub')]
+tc: [('wh', 'td')]
+qp: [('kh', 'ub'), ('td', 'wh')]
+de: [('co', 'ta'), ('co', 'ka'), ('ta', 'ka')]
+cg: [('yn', 'aq')]
+ka: [('co', 'ta'), ('co', 'de'), ('ta', 'de')]
+co: [('ka', 'ta'), ('ka', 'de'), ('ta', 'de')]
+yn: [('aq', 'cg'), ('wh', 'td')]
+aq: [('yn', 'cg'), ('vc', 'wq')]
+ub: [('qp', 'kh'), ('wq', 'vc')]
+tb: [('wq', 'vc')]
+vc: [('aq', 'wq'), ('ub', 'wq'), ('wq', 'tb')]
+wh: [('tc', 'td'), ('td', 'yn'), ('td', 'qp')]
+ta: [('co', 'ka'), ('co', 'de'), ('ka', 'de')]
+td: [('tc', 'wh'), ('wh', 'qp'), ('wh', 'yn')]
+wq: [('tb', 'vc'), ('ub', 'vc'), ('aq', 'vc')]

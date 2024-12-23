@@ -53,44 +53,44 @@ def findSets1(pairs):
 
 def findSets2(pairs):
   nsets = {}
-  nsets[2] = pairs
+  nsets[2] = []
+  for pairLeft in pairs:
+    for pairRight in pairs[pairLeft]:
+      nsets[2].append([pairLeft, pairRight])
 
+  # continue here, idea: pick entry from n-1 set, exchange first entry with one entry from the pairs, and check that it is an set as well
+  # seems to work, but very slow; idea: do not add entries from pairs but rather from m-set (and use the biggest m < n possible)
   n = 2
   while n in nsets:
-    if n > 2:
-      break
     n = n + 1
-    for node in nsets[n-1].keys():
-      combinations = findsubsets(nsets[n-1][node], n-1)
-      for combination in combinations:
-        allConnected = True
-        for i in range(n-1):
-          for j in range(n-1):
-            if i == j:
-              continue
-            if not combination[i] in nsets[n-1][combination[j]]:
-              allConnected = False
-              break
+    print(f"n={n} with {len(nsets[n-1])} entries")
+    if n > 30:
+      break
+    for nset in nsets[n-1]:
+      exchanged = nset[0]
+      for linked in pairs[exchanged]:
+        debug(f"Checking if {nset} with {exchanged} replaced by {linked} is a {n-1}-set as well")
+        sorted = []
+        for node in nset:
+          if not node == exchanged:
+            sorted.append(node)
+        if not linked in sorted:
+          sorted.append(linked)
+          sorted.sort()
+          if sorted in nsets[n-1]:
+            sorted.append(exchanged)
+            sorted.sort()
+            if not n in nsets:
+              nsets[n] = []
+            if not sorted in nsets[n]:
+              nsets[n].append(sorted)
+              if len(nsets[n]) % 10000 == 0
+                print(f"Already {len(nsets[n])} entries for n={n}")
 
-          if not allConnected:
-            break
-        if allConnected:
-          debug(f"-> {combination} found in {nsets[n-1]}")
-          if not n in nsets:
-            nsets[n] = {}
-          if not node in nsets[n]:
-            nsets[n][node] = []
-          nsets[n][node].append(combination)
-          #for node in nsets[n-1]:
-          #  debug(f"{node}: {nsets[n-1][node]}")
-
-  debug(f"Found {len(nsets[n-1])} biggest set")
-
-  # sorted = sortedSet(node, combination[0], combination[1])
-  # if sorted not in nsets[n]:
+  debug(f"Found {len(nsets[n-1])} biggest set for n={n-1}")
 
   for node in nsets[n-1]:
-    debug(f"{node}: {nsets[n-1][node]}")
+    debug(f"{node}")
 
   return nsets[n-1]
 
@@ -114,9 +114,9 @@ def part2(useRealData):
   pairs = transform(input)
   sets = findSets2(pairs)
 
-  print(f"Result for part 2: {len(sets)}")
-  print(f"Expected:          {['co', 'de', 'ka', 'ta']}")
+  print(f"Result for part 2: {len(sets)} -> {sets}")
+  print(f"Expected:          1 -> {['co', 'de', 'ka', 'ta']}")
 
 def solve():
   #part1(True)
-  part2(False)
+  part2(True)

@@ -1,0 +1,71 @@
+old
+Typing for < with focus A
+repositioning focus A for <
+Typed v for < with focus A
+Changing focus from A after pressing v
+Oops ... can't change focus on keypad 4 from A when typing v
+Lost focus on keypad 4 for v with old focus A
+
+new
+ACTIVATE
+Typing for A with focus <
+repositioning focus < for A
+Typed > for A with focus <
+Changing focus from < after pressing >
+New focus: v
+Typed > for A, new focus v
+repositioning focus v for A
+Typed ^ for A with focus v
+Changing focus from v after pressing ^
+Oops ... can't change focus on keypad 4 from v when typing ^
+Lost focus on keypad 4 for ^ with old focus v
+
+
+
+---
+
+    +---+---+
+    | ^ | A |
++---+---+---+
+| < | v | > |
++---+---+---+
+
+MY v<A<AA>^>AvA^<Av>A^Av<A^>A<A>Av<A<AA>^>AvA^<Av>A^AAv<A<A>^>Av<<A>^>AvA^<Av>A^AAv<A^>A<Av<A>^>Av<A>A^A<A>Av<A<A>^>A<Av>A^AAv<<A>^>AvA^Av<A<A>^>Av<<A>^>AvA^<Av>A^AAAv<<A>^>Av<A>A^A<A>A
+EX <v<A>>^AvA^A<vA<AA>>^AAvA<^A>AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A
+
+#1 v<A
+#2 <A
+#3 A
+#4 >^>A
+...vA^<Av>A^Av<A^>A<A>Av<A<AA>^>AvA^<Av>A^AAv<A<A>^>Av<<A>^>AvA^<Av>A^AAv<A^>A<Av<A>^>Av<A>A^A<A>Av<A<A>^>A<Av>A^AAv<<A>^>AvA^Av<A<A>^>Av<<A>^>AvA^<Av>A^AAAv<<A>^>Av<A>A^A<A>A
+
+KEY PAD 4
+#4.1 v<A
+A + v = >
+> + < = v -> A! 3.1
+
+#4.2 <A
+v + < = < -> A! 3.1
+
+#4.3 A
+< -> A! 2.1
+
+#4.4 >^>A
+< + > = v
+v + ^ = ^
+^ + > = A -> A! 3.2
+
+KEYPAD 3
+#3.1
+A + v = >
+> + < = v
+v + < = < -> A! 2.1
+
+#2.2 
+
+KEYPAD 2
+#2.1
+A + < = ^
+
+KEYPAD 1
+#1.1

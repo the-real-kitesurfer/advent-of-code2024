@@ -1,1 +1,3 @@
 resources/data/*
+src/day11bis.py
+src/__pycache__/*

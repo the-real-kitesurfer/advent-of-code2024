@@ -84,7 +84,7 @@ def findSets2(pairs):
               nsets[n] = []
             if not sorted in nsets[n]:
               nsets[n].append(sorted)
-              if len(nsets[n]) % 10000 == 0
+              if len(nsets[n]) % 10000 == 0:
                 print(f"Already {len(nsets[n])} entries for n={n}")
 
   debug(f"Found {len(nsets[n-1])} biggest set for n={n-1}")
@@ -116,6 +116,7 @@ def part2(useRealData):
 
   print(f"Result for part 2: {len(sets)} -> {sets}")
   print(f"Expected:          1 -> {['co', 'de', 'ka', 'ta']}")
+  #correct: aw,fk,gv,hi,hp,ip,jy,kc,lk,og,pj,re,sr!
 
 def solve():
   #part1(True)

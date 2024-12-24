@@ -1,0 +1,138 @@
+z07:
+(
+  (
+    (
+      (
+        (x05) AND (y05)
+      )
+        OR
+      (
+        (
+          (
+            (
+              (
+                (
+                  (
+                    (x02) AND (y02)
+                  )
+                    OR
+                  (
+                    (
+                      (x02) XOR (y02)
+                    )
+                    AND
+                    (
+                      (
+                        (
+                          (x01) XOR (y01)
+                        )
+                          AND
+                        (
+                          (y00) AND (x00)
+                          )
+                        )
+                        OR
+                        (
+                          (y01) AND (x01)
+                        )
+                      )
+                    )
+                  )
+                  AND
+                  (
+                    (x03) XOR (y03)
+                  )
+                )
+                OR
+                (
+                  (x03) AND (y03)
+              )
+            )
+            AND
+            (
+              (x04) XOR (y04)
+          )
+          )
+          OR
+          (
+            (x04)
+            AND
+            (y04)
+          )
+        )
+        AND
+        (
+          (y05) XOR (x05)
+        )
+      )
+    )
+    AND
+    (
+      (y06) XOR (x06)
+    )
+  )
+  OR
+  (
+    (x06) AND (y06)
+  )
+)
+AND
+(
+  (x07) XOR (y07)
+)
+
+
+---
+A: x00 = 0, y00 = 0, x01 = 0, y01 = 0, x02 = 0, y02 = 0 -> z00 = 0, z01 = 0, z02 = 0
+B: x00 = 0, y00 = 1, x01 = 0, y01 = 0, x02 = 0, y02 = 0 -> z00 = 1, z01 = 0, z02 = 0
+C: x00 = 1, y00 = 0, x01 = 0, y01 = 0, x02 = 0, y02 = 0 -> z00 = 1, z01 = 0, z02 = 0
+D: x00 = 1, y00 = 1, x01 = 0, y01 = 0, x02 = 0, y02 = 0 -> z00 = 0, z01 = 1, z02 = 0
+
+                   A      B      C      D
+y00 XOR x00 -> z00 0,0->0 1,0->1 0,1->1 
+y00 AND x00 -> dhb 0,0->0 1,0->0 0,1->0
+dhb XOR qpp -> z01 0,0->0 0,0->0 0,0->0
+qpp AND dhb -> ndg 0,0->0 0,0->0 0,0->0
+ndg OR  pbr -> vnb 0,0->0 0,0->0 0,0->0
+x01 XOR y01 -> qpp 0,0->0 0,0->0 0,0->0
+y01 AND x01 -> pbr 0,0->0 1,0->0 1,0->0
+vnb XOR phv -> z02 0,0->0 0,0->0 0,0->0
+phv AND vnb -> rkh 0,0->0 0,0->0 0,0->0
+x02 XOR y02 -> phv 0,0->0 0,0->0 0,0->0
+
+
+-> z01 = y00 AND x00 XOR qpp
+z02 = x01 XOR y01 AND y00 AND x00 OR y01 AND x01 XOR x02 XOR y02
+
+---
+ORs
+tnj OR wbv -> svp
+kqb OR qvd -> ngf
+ndv OR wqg -> dgr
+wmr OR btg -> z45
+csj OR gtf -> fwv
+pfs OR cpn -> hpn
+cgc OR hdp -> nfb
+ghw OR vsb -> gnj
+cbj OR gsh -> hvb
+y44 AND x44 -> btg
+pfm AND jcr -> wmr
+x44 XOR y44 -> pfm
+cwf OR nsk -> jcr
+hpn AND kgf -> ns
+y43 XOR x43 -> kgf
+gnn AND nsj -> cpn
+vdc OR bhj -> nsj
+y41 AND x41 -> bhj
+hrc AND pss -> vdc
+x41 XOR y41 -> pss
+rsj OR cvk -> hrc
+x40 AND y40 -> cvk
+cjs AND fdp -> rsj
+hqf OR wtb -> fdp
+x39 AND y39 -> wtb
+gdq AND mgc -> hqf
+khs OR hwm -> mgc
+y38 AND x38 -> hwm
+
+-> z45 = x44 XOR y44 AND cwf OR pfs OR gnn AND cjs AND gdq AND khs OR y38 AND x38 OR x39 AND y39 OR x40 AND y40 AND x41 XOR y41 OR y41 AND x41 AND y43 XOR x43  OR y44 AND x44

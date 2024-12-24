@@ -173,8 +173,14 @@ def part2(useRealData):
   global program
   global output
 
-  initialInput = 0
+  initialInput = 281474977135029
+  #upper:   281474977135029
+  #current: 281474463788733
+  #lower:    28147497713502
+  #initialInput = pow(8,16)
+  initialInput = int("0b11111111111111111111111111111111111111111111101", 2)
   bestMatch = -1
+  max_digits = 0
   while True:
     debug(f"Trying to clone with initialInput {initialInput}")
     initialize(input)
@@ -192,7 +198,18 @@ def part2(useRealData):
     if clonedItself(len(program)):
       print(f"Output of complete program does not match the program's code: as-is {output} vs to-be {program}")
       break
-    initialInput += 1
+
+    for i in range(16):
+      if len(output) <= i or not program[i] == output[i]:
+        break
+    if i >= max_digits:
+      print(f"First {i} digits of {len(output)} correct for {bin(initialInput)} ({initialInput})")
+      max_digits = i
+    #binary = bin(initialInput)
+    initialInput -= 1
+    #while not "10111101" == binary[len(binary) - 8:]:
+    #  initialInput -= 1
+    #  binary = bin(initialInput)
 
   print(f"Result for part 2: {initialInput}")
 

@@ -4,7 +4,38 @@ from helper import DEBUG, debug, fetchData
 from functools import lru_cache
 import itertools
 
-def permute(sequence):
+def permuteSingle(action):
+  debug(f"permuteSingle for {action}")
+
+  permutations = []
+  for p in itertools.permutations(action):
+    #debug(f"Processing {p}")
+    toType = ""
+    for c in p:
+      toType += c[0]
+    
+    if not toType + 'A' in permutations:
+      permutations.append(toType + 'A')
+
+  debug(f"Created {len(permutations)} permutations for {action}: {permutations}")
+
+  return permutations
+
+@lru_cache(maxsize=None)
+def countNumberClicks(toType, keypad):
+  debug(f"countNumberClicks for {toType} on {keypad}")
+  if keypad > 4:
+    return len(toType)
+  else:
+    toTypeOnKeypad = ""
+    inFocus = 'A'
+    for c in toType:
+      toTypeOnKeypad += tpyeIn(c, inFocus, keypad)
+      inFocus = c
+    return countNumberClicks(toTypeOnKeypad, keypad + 1)
+
+def permuteSequence(sequence, keypad):
+  print(f"permuteSequence for {sequence} on {keypad}")
   actions = []
   part = []
   for c in sequence:
@@ -14,22 +45,40 @@ def permute(sequence):
     else:
       part.append(c)
 
-  debug(f"Parts for {sequence}: {actions}")
+  print(f"Found {len(actions)} parts in {sequence}: {actions}")
 
-  #permutations = list(itertools.permutations(parts))
-  permutations = []
-  for action in actions:
-    for p in itertools.permutations(action):
-      debug(f"Processing {p}")
-      toType = ""
-      for c in p:
-        toType += c[0]
-      
-      permutations.append(toType + 'A')
+  permutationsForSequence = []
+  for i, action in enumerate(actions):
+    permutationsForAction = permuteSingle(action)
+    debug(f"Found {len(permutationsForAction)} permutations for {i}th action, {action}")
 
-  debug(f"Created {len(permutations)} permutations for list with {len(actions)} actions - {permutations} from {sequence} resp. {actions} as a list; first permutation: {permutations[0][0]}")
+    # idea: keep only the most promising ones (= smallest number of clicks on HIGHER keypad)
+    mostPromisingPermutations = []
+    for perm in permutationsForAction:
+      if not isSequenceValid('A', perm, keypad):
+        continue
+      numberClicks = countNumberClicks(perm, keypad + 1)
+      debug(f"{numberClicks} needed for {perm}")
+      if len(mostPromisingPermutations) == 0 or numberClicks < countNumberClicks(mostPromisingPermutations[0], keypad + 1):
+        mostPromisingPermutations = [perm]
+      elif numberClicks == countNumberClicks(mostPromisingPermutations[0], keypad + 1):
+        mostPromisingPermutations.append(perm)
 
-  return permutations
+    print(f"Kept {mostPromisingPermutations} permutation as the best for {i}th action, {action}, on {keypad}")
+
+    if len(permutationsForSequence) == 0:
+      permutationsForSequence = [mostPromisingPermutations[0]]
+    else:
+      newPermutationsForSequence = []
+      for permForSequence in permutationsForSequence:
+        permForAction = mostPromisingPermutations[0]
+        #for permForAction in permutationsForAction:
+        newPermutationsForSequence.append(permForSequence + permForAction)
+      permutationsForSequence = newPermutationsForSequence
+
+  debug(f"Created {len(permutationsForSequence)} permutations for list with {len(actions)} actions - {permutationsForSequence} from {sequence} resp. {actions} as a list; first permutation: {permutationsForSequence[0][0]}")
+
+  return permutationsForSequence
 
 
 def isSequenceValid(inFocus, sequence, keypad):
@@ -113,7 +162,7 @@ def changeFocus(inFocus, typed, keypad):
   return None
 
 def reposition(c, inFocus, keypad):
-  debug(f"repositioning focus {inFocus} for {c}")
+  debug(f"repositioning focus {inFocus} for {c} on {keypad}")
   #1: robot on door, #2: robot on robot 1, #3: robot on robot 2, #4: I
   if keypad == 1:
     if c in ['7', '8', '9']:
@@ -232,13 +281,13 @@ def tpyeIn(c, inFocus, keypad):
   return toType
 
 def typeCode(codesToType, keypad):
-  debug(f"Called typeCode for {codesToType}, {keypad}")
+  print(f"Called typeCode for {codesToType}, {keypad}")
   codes = []
   if keypad > 1:
     for codeToType in codesToType:
       debug(f"Typing {codeToType} on keypad {keypad - 1}")
       newCodes = typeCode([codeToType], keypad - 1)
-      debug(f"Found {len(newCodes)} codes for {codeToType} on keypad {keypad}, first code: {newCodes[0]}")
+      print(f"Found {len(newCodes)} codes for {codeToType} on keypad {keypad}, first code: {newCodes[0]}")
       codes += newCodes
   else:
     codes += codesToType
@@ -258,11 +307,11 @@ def typeCode(codesToType, keypad):
       toTypeForCode += toType
 
     print(f"toTypeForCode: {toTypeForCode}")
-    allPermutations = permute(toTypeForCode)
-    debug(f"Found toTypeForCode = {toTypeForCode}, created permutations: {allPermutations}")
+    allPermutations = permuteSequence(toTypeForCode, keypad)
+    print(f"Found toTypeForCode = {toTypeForCode}, created permutations: {allPermutations}")
     for permutation in allPermutations:
       if isSequenceValid('A', permutation, keypad):
-        print(f"Valid: {permutation} on {keypad}")
+        debug(f"Valid: {permutation} on {keypad}")
         options.append(permutation)
         #print(f"Checking if {permutation} is the shortest option")
         if shortestCode == -1 or shortestCode > len(permutation):
@@ -275,7 +324,8 @@ def typeCode(codesToType, keypad):
     if len(option) == shortestCode and not option in shortestOptions:
       shortestOptions.append(option)
 
-    print(f"{shortestOptions} are the shortest options to type {codesToType} on {keypad}; overall were {len(options)} options found")
+    debug(f"{shortestOptions} are the shortest options to type {codesToType} on {keypad}; overall were {len(options)} options found")
+  print(f"Identified {len(shortestOptions)} shortest options out of {len(options)} valid options to type {codesToType} on {keypad}: {shortestOptions}")
   return shortestOptions
 
 def complexity(code, toType):
@@ -286,14 +336,35 @@ def complexity(code, toType):
   debug(f"Numeric part in {code} is {numericPart}")
   return int(numericPart) * len(toType)
 
-def typeCodes(codes):
+def validate(typedCode, keypad):
+  debug(f"Validating {typedCode} on {keypad}")
+  typedOnNextKeypad = ""
+  inFocus = 'A'
+  for c in typedCode:
+    if c == 'A':
+      typedOnNextKeypad += inFocus
+    else:
+      inFocus = changeFocus(inFocus, c, keypad)
+      if not inFocus:
+        print(f"Lost focus after typing {c} from {typedCode} on {keypad}!")
+
+  if keypad > 1:
+    return validate(typedOnNextKeypad, keypad - 1)
+  else:
+    return typedOnNextKeypad
+
+
+def typeCodes(codes, keypad):
   toTypeForCodes = []
   for code in codes:
     print(f"OUTER: {code} from {codes}")
-    toType = typeCode([code], 4)
-    print(f"I need to type {toType} for code {code}")
-    #return ""
-    toTypeForCodes.append(toType)
+    toTypeOptions = typeCode([code], keypad)
+    print(f"I need to type any of {toTypeOptions} for code {code}")
+    
+    for toType in toTypeOptions:
+      if not validate(toType, keypad) == code:
+        print(f"Unexpected result when typing in {toType}: {validate(toType, keypad)} (expected: {code})")
+    toTypeForCodes.append(toTypeOptions)
 
   totalComplexity = 0
   for i in range(len(codes)):
@@ -307,21 +378,25 @@ def part1(useRealData):
 
   codes = fetchData(DAY, useRealData)
 
-  totalComplexity = typeCodes(codes)
+  totalComplexity = typeCodes(codes, 4)
 
   print(f"Result for part 1: {str(totalComplexity)}")
+  print(f"Expected:          126384")
 
 def part2(useRealData):
   print("Day " + DAY + ", Part 2")
 
   codes = fetchData(DAY, useRealData)
 
-  totalComplexity = typeCodes(codes)
+  totalComplexity = typeCodes(codes, 4)
 
   print(f"Result for part 2: {str(totalComplexity)}")
 
 def solve():
   seq = "<^<A"
-  print(f"Permutations for {seq}: {permute(seq)}")
+  seq = "v<A<AA>>^AvAA^<A>Av<<A>>^AvA^Av<<A>>^AAv<A>A^A<A>Av<A<A>>^AAA<Av>A^A"
+  #print(f"Permutations for {seq}: {permuteSequence(seq,3)}")
   part1(False)
   #part2(False)
+
+  # likely best to start from scratch :-o

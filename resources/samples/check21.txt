@@ -1,0 +1,78 @@
+xFirst im default FALSE
+ Need to type in ^A^^<<A>>AvvvA for 379A on 1, length 14
+ Need to type in <A>A<AAv<AA>>^AvAA^Av<AAA^>A for ^A^^<<A>>AvvvA on 2, length 28
+ Need to type in v<<A>>^AvA^Av<<A>>^AAv<A<A>>^AAvAA^<A>Av<A^>AA<A>Av<A<A>>^AAA<Av>A^A for <A>A<AAv<AA>>^AvAA^Av<AAA^>A on 3, length 68
+
+xFirst im default TRUE
+ Need to type in ^A<<^^A>>AvvvA for 379A on 1, length 14
+ Need to type in <A>Av<<AA>^AA>AvAA^Av<AAA>^A for ^A<<^^A>>AvvvA on 2, length 28
+ Need to type in v<<A>>^AvA^Av<A<AA>>^AAvA<^A>AAvA^Av<A>^AA<A>Av<A<A>>^AAAvA<^A>A for <A>Av<<AA>^AA>AvAA^Av<AAA>^A on 3, length 64
+
+COMPARE
+ Need to type in ^A^^<<A>>AvvvA for 379A on 1, length 14
+ Need to type in ^A<<^^A>>AvvvA for 379A on 1, length 14
+
+ Need to type in <A>A <AAv<AA>>^AvAA^Av<AAA^>A for ^A^^<<A>>AvvvA on 2, length 28
+ Need to type in <A>A v<<AA>^AA>AvAA^Av<AAA>^A for ^A<<^^A>>AvvvA on 2, length 28
+
+ Need to type in v<<A>>^AvA^Av<<A>>^AAv<A<A>>^AAvAA^<A>Av<A^>AA<A>Av<A<A>>^AAA<Av>A^A for <A>A<AAv<AA>>^AvAA^Av<AAA^>A on 3, length 68
+ Need to type in v<<A>>^AvA^Av<A<AA>>^AAvA<^A>AAvA^Av<A>^AA<A>Av<A<A>>^AAAvA<^A>A for <A>Av<<AA>^AA>AvAA^Av<AAA>^A on 3, length 64
+
+
+
+----
+
+xFirst im default FALSE
+ Need to type in ^A for 3 on 1, length 2
+ Need to type in <A>A for ^A on 2, length 4
+ Need to type in v<<A>>^AvA^A for <A>A on 3, length 12
+
+ Need to type in ^^<<A for 7 on 1, length 5
+ Need to type in <AAv<AA>>^A for ^^<<A on 2, length 11
+ Need to type in v<<A>>^AAv<A<A>>^AAvAA^<A>A for <AAv<AA>>^A on 3, length 27 xxxx
+
+ Need to type in >>A for 9 on 1, length 3
+ Need to type in vAA^A for >>A on 2, length 5
+ Need to type in v<A^>AA<A>A for vAA^A on 3, length 11
+
+ Need to type in vvvA for A on 1, length 4
+ Need to type in v<AAA^>A for vvvA on 2, length 8
+ Need to type in v<A<A>>^AAA<Av>A^A for v<AAA^>A on 3, length 18
+
+
+xFirst im default TRUE
+ Need to type in ^A for 3 on 1, length 2
+ Need to type in <A>A for ^A on 2, length 4
+ Need to type in v<<A>>^AvA^A for <A>A on 3, length 12
+
+ Need to type in <<^^A for 7 on 1, length 5
+ Need to type in v<<AA>^AA>A for <<^^A on 2, length 11
+ Need to type in v<A<AA>>^AAvA<^A>AAvA^A for v<<AA>^AA>A on 3, length 23
+
+ Need to type in >>A for 9 on 1, length 3
+ Need to type in vAA^A for >>A on 2, length 5
+ Need to type in v<A>^AA<A>A for vAA^A on 3, length 11
+
+ Need to type in vvvA for A on 1, length 4
+ Need to type in v<AAA>^A for vvvA on 2, length 8
+ Need to type in v<A<A>>^AAAvA<^A>A for v<AAA>^A on 3, length 18
+
+
+---
+
+ Need to type in ^^<<A for 7 on 1, length 5
+ Need to type in <AAv<AA>>^A for ^^<<A on 2, length 11
+ Need to type in v<<A>>^AAv<A<A>>^AAvAA^<A>A for <AAv<AA>>^A on 3, length 27 xxxx
+
+ Need to type in <<^^A for 7 on 1, length 5
+ Need to type in v<<AA>^AA>A for <<^^A on 2, length 11
+ Need to type in v<A<AA>>^AAvA<^A>AAvA^A for v<<AA>^AA>A on 3, length 23
+
+
+---
+
+ Need to type in v<<A>>^A<A>AvA<^AA>Av<AAA>^A for <A^A>^^AvvvA on 2, length 28 with defaultXFirst: True
+EXPECTED.        v<<A>>^A<A>AvA<^AA>A<vAAA>^A
+ Need to type in v<<A>>^A<A>AvA^<AA>Av<AAA^>A for <A^A>^^AvvvA on 2, length 28 with defaultXFirst: False
+ Need to type in v<<A>>^A<A>AvA^<AA>Av<AAA^>A for <A^A>^^AvvvA on 2, length 28
+

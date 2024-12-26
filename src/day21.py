@@ -31,19 +31,19 @@ def fromCoordinate(pos, isDoor):
   for key in coordinates:
     if coordinates[key] == pos:
       return key
-  debug(f"Did not find key for {pos} (onDoor: {isDoor})")
+  print(f"Did not find key for {pos} (onDoor: {isDoor})")
   return "?"
 
-def validate(typed, firstKeypad, inFocus):
-  focusedPos = coordinate(inFocus, firstKeypad)
+def validate(typed, keypad, inFocus):
+  focusedPos = coordinate(inFocus, keypad == 1)
   for i, c in enumerate(typed):
     if c == '<': focusedPos = (focusedPos[0] - 1, focusedPos[1])
     if c == '>': focusedPos = (focusedPos[0] + 1, focusedPos[1])
     if c == '^': focusedPos = (focusedPos[0], focusedPos[1]-1)
     if c == 'v': focusedPos = (focusedPos[0], focusedPos[1]+1)
-    keyInFocus = fromCoordinate(focusedPos, firstKeypad)
+    keyInFocus = fromCoordinate(focusedPos, keypad == 1)
     if keyInFocus == '?':
-      debug(f"Lost focus when typing character {i} ({c}) from {typed} with focus on {inFocus} on firstKeypad: {firstKeypad}")
+      print(f"Lost focus when typing character {i} ({c}) from {typed} with focus on {inFocus} on {keypad}")
       return False
   return True
 
@@ -95,11 +95,11 @@ def deltaToKeys(x,y, xFirst):
   return [keysForX[x] + keysForY[y] + 'A', keysForY[y] + keysForX[x] + 'A']
 
 @lru_cache(maxsize=None)
-def findRoutes(c1, c2, firstKeypad):
+def findRoutes(c1, c2, keypad):
   options = []
   for defaultXFirst in [True, False]:
     xFirst = defaultXFirst
-    if firstKeypad: #the 1x9 grid on the final door
+    if keypad == 1: #the 1x9 grid on the final door
       if defaultXFirst and c1 in ['0', 'A']:
         xFirst = False
       if not defaultXFirst and c1 in ['7', '4', '1']:
@@ -110,16 +110,15 @@ def findRoutes(c1, c2, firstKeypad):
       if not defaultXFirst and c1 in ['<']:
         xFirst = True
 
-    pos1, pos2 = coordinate(c1, firstKeypad), coordinate(c2, firstKeypad)
+    pos1, pos2 = coordinate(c1, keypad == 1), coordinate(c2, keypad == 1)
     #debug(f"{pos1} -> {pos2} = {deltaToKeys(pos2[0] - pos1[0], pos2[1] - pos1[1], xFirst)} with xFirst = {xFirst}")
     for option in deltaToKeys(pos2[0] - pos1[0], pos2[1] - pos1[1], xFirst):
       # check: use only VALID sequences here ...
-      if validate(option, firstKeypad, c1):
+      if validate(option, keypad, c1):
         options.append(option)
   return options
 
-def typeIn(code, keypad, doValidation, origInFocus, lastKeyPad):
-  # idea: track caller context, and then make stats, which char on keypad 1 resulted in which best option(s) on keypads 2..n; same for the char on level 2 etc ...
+def typeIn(code, keypad, doValidation, origInFocus):
   if keypad == 1:
     debug("")
 
@@ -127,7 +126,7 @@ def typeIn(code, keypad, doValidation, origInFocus, lastKeyPad):
   inFocus = origInFocus # 'A'
   for c in code:
     routesForC = []
-    for route in findRoutes(inFocus, c, keypad == 1):
+    for route in findRoutes(inFocus, c, keypad):
       routesForC.append(route)
     inFocus = c
 
@@ -142,21 +141,19 @@ def typeIn(code, keypad, doValidation, origInFocus, lastKeyPad):
       for route in routesForC:
         if (True or len(route) == bestNewLength) and not prevOption + route in newOptions:
           newOptions.append(prevOption + route)
-          if len(newOptions) % 1000 == 0:
-            print(f"Found option #{len(newOptions)}")
 
     options = newOptions
     #debug(f" Need to type in {toTypePerXFirst[defaultXFirst]} for {code} on {keypad}, length {len(toTypePerXFirst[defaultXFirst])} with defaultXFirst: {defaultXFirst}")
 
 
-  debug(f" Need to type in any of {options} for {code} on isFirstKeypad: {isFirstKeypad}")
+  debug(f" Need to type in any of {options} for {code} on {keypad}")
   if doValidation:
     for option in options:
-      if not validate(option, keypad == 1, origInFocus):
+      if not validate(option, keypad, origInFocus):
         print(f"Invalid sequence detected in {option} with focus on {origInFocus} on {keypad}")
         return []
 
-  if keypad == lastKeyPad:
+  if keypad == 3:
     if doValidation:
       if code == "029A":
         debug(f"Expected to type <vA<AA>>^AvAA<^A>A<v<A>>^AvA^A<vA>^A<v<A>^A>AAvA^A<v<A>A>^AAAvA<^A>A, length {len("<vA<AA>>^AvAA<^A>A<v<A>>^AvA^A<vA>^A<v<A>^A>AAvA^A<v<A>A>^AAAvA<^A>A")}")
@@ -170,7 +167,7 @@ def typeIn(code, keypad, doValidation, origInFocus, lastKeyPad):
     combinedOptions = []
     for i, option in enumerate(options):
       print(f"Checking option {i} of {len(options)}")
-      innerOptions = typeIn(option, keypad + 1, doValidation, 'A', lastKeyPad)
+      innerOptions = typeIn(option, keypad + 1, doValidation, 'A')
       if innerOptions == []:
         print(f"Invalid sequence found in {option}  with focus {'A'} on {keypad + 1}")
         return []
@@ -202,10 +199,10 @@ def part1(useRealData):
 
   totalComplexity = 0
   for code in codes:
-    shortest = ""
     inFocus = 'A'
+    shortest = ""
     for c in code:
-      toType = typeIn(c, 1, True or not useRealData, inFocus, 2+1)
+      toType = typeIn(c, 1, True or not useRealData, inFocus)
       inFocus = c
       shortest += shortestOption(toType)
     debug(f"Shortest option from {toType} is {shortest}")
@@ -219,16 +216,7 @@ def part2(useRealData):
 
   codes = fetchData(DAY, useRealData)
 
-  totalComplexity = 0
-  for code in codes:
-    inFocus = 'A'
-    shortest = ""
-    for c in code:
-      toType = typeIn(c, 1, True or not useRealData, inFocus, 4+1)
-      inFocus = c
-      shortest += shortestOption(toType)
-    debug(f"Shortest option from {toType} is {shortest}")
-    totalComplexity += complexity(code, shortest)
+  totalComplexity = typeCodes(codes, 4)
 
   print(f"Result for part 2: {str(totalComplexity)}")
 
@@ -242,4 +230,13 @@ def solve():
   # attempt 3: 164684
   # attempt 4: 161952
   # attempt 5: 157908
+
+  #typeIn("3", 1, False, 'A')
+  #typeIn("7", 1, False, '3')
+  #typeIn("9", 1, False, '7')
+  #typeIn("A", 1, False, '9')
+  #print(typeIn("<", 3, True, 'A'))
+  #+shortestOption(typeIn("2", 1, True, '0'))+shortestOption(typeIn("9", 1, True, '2'))+shortestOption(typeIn("A", 1, True, '9')))
   #part2(False)
+
+  # likely best to start from scratch :-o

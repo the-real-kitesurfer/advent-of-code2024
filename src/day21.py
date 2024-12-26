@@ -203,6 +203,7 @@ def part1(useRealData):
   totalComplexity = 0
   for code in codes:
     shortest = ""
+    inFocus = 'A'
     for c in code:
       toType = typeIn(c, 1, True or not useRealData, inFocus, 2+1)
       inFocus = c
@@ -241,4 +242,4 @@ def solve():
   # attempt 3: 164684
   # attempt 4: 161952
   # attempt 5: 157908
-  part2(True)
+  #part2(False)

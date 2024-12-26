@@ -118,16 +118,17 @@ def findRoutes(c1, c2, firstKeypad):
         options.append(option)
   return options
 
-def typeIn(code, keypad, doValidation, origInFocus, lastKeyPad):
+@lru_cache(maxsize=None)
+def typeIn(code, isFirstKeypad, doValidation, origInFocus):
   # idea: track caller context, and then make stats, which char on keypad 1 resulted in which best option(s) on keypads 2..n; same for the char on level 2 etc ...
-  if keypad == 1:
+  if isFirstKeypad:
     debug("")
 
   options = [""]
   inFocus = origInFocus # 'A'
   for c in code:
     routesForC = []
-    for route in findRoutes(inFocus, c, keypad == 1):
+    for route in findRoutes(inFocus, c, isFirstKeypad):
       routesForC.append(route)
     inFocus = c
 
@@ -149,35 +150,14 @@ def typeIn(code, keypad, doValidation, origInFocus, lastKeyPad):
     #debug(f" Need to type in {toTypePerXFirst[defaultXFirst]} for {code} on {keypad}, length {len(toTypePerXFirst[defaultXFirst])} with defaultXFirst: {defaultXFirst}")
 
 
-  debug(f" Need to type in any of {options} for {code} on {keypad}")
+  debug(f" Need to type in any of {options} for {code} on isFirstKeypad: {isFirstKeypad}")
   if doValidation:
     for option in options:
-      if not validate(option, keypad == 1, origInFocus):
-        print(f"Invalid sequence detected in {option} with focus on {origInFocus} on {keypad}")
+      if not validate(option, isFirstKeypad, origInFocus):
+        print(f"Invalid sequence detected in {option} with focus on {origInFocus} on {isFirstKeypad}")
         return []
 
-  if keypad == lastKeyPad:
-    if doValidation:
-      if code == "029A":
-        debug(f"Expected to type <vA<AA>>^AvAA<^A>A<v<A>>^AvA^A<vA>^A<v<A>^A>AAvA^A<v<A>A>^AAAvA<^A>A, length {len("<vA<AA>>^AvAA<^A>A<v<A>>^AvA^A<vA>^A<v<A>^A>AAvA^A<v<A>A>^AAAvA<^A>A")}")
-      else:
-        debug(f"Expected length: Code 1 = 68, Code 2 = 60, Code 3 = 68, Code 4 = 64, Code 5 = 64")
-    return options # toType
-  else:
-    if code == "029A":
-      if keypad == 2: debug(f"Expected to type v<<A>>^A<A>AvA<^AA>A<vAAA>^A, length {len("v<<A>>^A<A>AvA<^AA>A<vAAA>^A")}")
-      if keypad == 1: debug(f"Expected to type <A^A>^^AvvvA, length {len("<A^A>^^AvvvA")}")
-    combinedOptions = []
-    for i, option in enumerate(options):
-      print(f"Checking option {i} of {len(options)}")
-      innerOptions = typeIn(option, keypad + 1, doValidation, 'A', lastKeyPad)
-      if innerOptions == []:
-        print(f"Invalid sequence found in {option}  with focus {'A'} on {keypad + 1}")
-        return []
-      for innerOption in innerOptions:
-        if not innerOption in combinedOptions:
-          combinedOptions.append(innerOption)
-    return combinedOptions
+  return options
 
 def shortestOption(options):
   shortest = -1
@@ -202,13 +182,19 @@ def part1(useRealData):
 
   totalComplexity = 0
   for code in codes:
-    inFocus = 'A'
     shortest = ""
-    for c in code:
-      toType = typeIn(c, 1, True or not useRealData, inFocus, 2+1)
-      inFocus = c
-      shortest += shortestOption(toType)
-    debug(f"Shortest option from {toType} is {shortest}")
+    inFocus = 'A'
+    allOptions = {1:[code]}
+    for keypad in range(1, 3+1, +1):
+      allOptions[keypad + 1] = []
+      for optionToType in allOptions[keypad]:
+        options = typeIn(optionToType, keypad == 1, True or not useRealData, inFocus)
+        for option in options:
+          if not option in allOptions[keypad + 1]:
+            allOptions[keypad + 1].append(option)
+    #toType = typeIn(c, 1, True or not useRealData, inFocus, 4+1)
+    shortest += shortestOption(allOptions[3+1])
+    debug(f"Shortest option from {allOptions[1]} is {shortest}")
     totalComplexity += complexity(code, shortest)
 
   print(f"Result for part 1: {str(totalComplexity)}")
@@ -221,13 +207,19 @@ def part2(useRealData):
 
   totalComplexity = 0
   for code in codes:
-    inFocus = 'A'
     shortest = ""
-    for c in code:
-      toType = typeIn(c, 1, True or not useRealData, inFocus, 4+1)
-      inFocus = c
-      shortest += shortestOption(toType)
-    debug(f"Shortest option from {toType} is {shortest}")
+    inFocus = 'A'
+    allOptions = {1:[code]}
+    for keypad in range(1, 3+1, +1):
+      allOptions[keypad + 1] = []
+      for optionToType in allOptions[keypad]:
+        options = typeIn(optionToType, keypad == 1, True or not useRealData, inFocus)
+        for option in options:
+          if not option in allOptions[keypad + 1]:
+            allOptions[keypad + 1].append(option)
+    #toType = typeIn(c, 1, True or not useRealData, inFocus, 4+1)
+    shortest += shortestOption(allOptions[3+1])
+    debug(f"Shortest option from {allOptions[1]} is {shortest}")
     totalComplexity += complexity(code, shortest)
 
   print(f"Result for part 2: {str(totalComplexity)}")
@@ -242,4 +234,4 @@ def solve():
   # attempt 3: 164684
   # attempt 4: 161952
   # attempt 5: 157908
-  part2(True)
+  part2(False)

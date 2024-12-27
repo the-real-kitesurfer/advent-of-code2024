@@ -109,7 +109,7 @@ def findRoutes(c1, c2, isFirstKeypad):
     if c1 in ['7', '4', '1'] and c2 in ['0', 'A']: #make sure to avoid the void by FIRST going right and then down
       xFirst = True
   else: # the <^v> grid on one of the robots
-    xFirst = pos1[0] < pos2[0]
+    xFirst = pos1[0] > pos2[0] # ok, admittedly pure guessing. "pos1 < pos2" worked for both the sample and real data in part1, but > yields WAY lower counts in part 2 :shrug
     if c1 in ['^', 'A'] and c2 == '<': #make sure to avoid the void by FIRST going down and then left
       xFirst = False
     if c1 in ['<'] and c2 in ['^', 'A']: #make sure to avoid the void by FIRST going right and then up
@@ -141,6 +141,40 @@ def findRoutesOLD(c1, c2, keypad):
         options.append(option)
   return options
 
+def countGroupsToType(groupsWithCountToType, keypad, directionalKeypads):
+  debug(f"Counting groups for {groupsWithCountToType} on {keypad}")
+  if keypad == 1:
+    debug("")
+
+  groupsWithCount = {}
+  for groupWithCountToType in groupsWithCountToType:
+    toType = ""
+    inFocus = 'A'
+    for i, c in enumerate(groupWithCountToType):
+      if i % 10000000 == -1:
+        print(f"Finding routes for {i}th of {len(groupWithCountToType)} chars on keypad {keypad} ({(100*i)//len(groupWithCountToType)}%)")
+      toType += findRoutes(inFocus, c, keypad == 1)
+      #for route in findRoutes(inFocus, c, keypad == 1):
+      #  routesForC.append(route)
+      inFocus = c
+
+    actionGroups = toType.split('A')
+    for i, actionGroup in enumerate(actionGroups):
+      if i == len(actionGroups) - 1:
+        continue # skip the last, entry group
+      if not actionGroup + 'A' in groupsWithCount:
+        groupsWithCount[actionGroup + 'A'] = groupsWithCountToType[groupWithCountToType]
+      else:
+        groupsWithCount[actionGroup + 'A'] += groupsWithCountToType[groupWithCountToType]
+    debug(f"Need to type {toType} for {groupWithCountToType}, actionGroups: {actionGroups}")
+  debug(f"New groups with counts: {groupsWithCount}")
+
+  if keypad == directionalKeypads:
+    return groupsWithCount
+  else:
+    return countGroupsToType(groupsWithCount, keypad + 1, directionalKeypads)
+
+
 def typeIn(code, keypad, doValidation, origInFocus, directionalKeypads):
   debug(f"Typing {code} on {keypad} with length {len(code)}")
   if keypad == 1:
@@ -149,7 +183,7 @@ def typeIn(code, keypad, doValidation, origInFocus, directionalKeypads):
   toType = ""
   inFocus = origInFocus # 'A'
   for i, c in enumerate(code):
-    if i % 10000000 == 0:
+    if i % 10000000 == -1:
       print(f"Finding routes for {i}th of {len(code)} chars on keypad {keypad} ({(100*i)//len(code)}%)")
     toType += findRoutes(inFocus, c, keypad == 1)
     #for route in findRoutes(inFocus, c, keypad == 1):
@@ -205,6 +239,27 @@ def complexity(code, toType):
   #debug(f"Numeric part in {code} is {numericPart}")
   return int(numericPart) * len(toType)
 
+def groupComplexity(code, groupsWithCount):
+  numericPart = ""
+  for c in code:
+    if c in ['0','1','2','3','4','5','6','7','8','9']:
+      numericPart += c
+  #debug(f"Numeric part in {code} is {numericPart}")
+  codeLength = 0
+  for groupWithCount in groupsWithCount:
+    codeLength += len(groupWithCount) * groupsWithCount[groupWithCount]
+  return int(numericPart) * codeLength
+
+def extractGroupsWithCount(toType):
+  groupsWithCount = {}
+  actionGroups = toType.split('A')
+  for actionGroup in actionGroups:
+    if not actionGroup + 'A' in groupsWithCount:
+      groupsWithCount[actionGroup + 'A'] = 1
+    else:
+      groupsWithCount[actionGroup + 'A'] += 1
+  return groupsWithCount
+
 def part1(useRealData):
   print("Day " + DAY + ", Part 1")
 
@@ -221,6 +276,8 @@ def part1(useRealData):
       shortest = shortestOption(toType)
       debug(f"Shortest option from {toType} is {shortest}")
       result += shortest
+    groupsWithCount = extractGroupsWithCount(result)
+    print(f"CHECK: Groups with count: {groupsWithCount} for {result}")
     totalComplexity += complexity(code, result)
 
   print(f"Result for part 1: {str(totalComplexity)}")
@@ -237,22 +294,9 @@ def part2(useRealData):
     inFocus = 'A'
     result = ""
     #code = "<vA<AA>>^AAvA<^A>AvA^A"
-    for c in code:
-      toType = typeIn(c, 1, False or not useRealData, inFocus, directionalKeypads)
-      inFocus = c
-      shortest = shortestOption(toType)
-      shortestResult1 = reverse(shortest, 4, "A")
-      shortestResult2 = reverse(shortestResult1, 3, "A")
-      shortestResult3 = ""#reverse(shortestResult2, 2, "A")
-      longest = longestOption(toType)
-      longestResult1 = reverse(longest, 4, "A")
-      longestResult2 = reverse(longestResult1, 3, "A")
-      longestResult3 = ""#reverse(longestResult2, 2, inFocus)
-      debug(f"Shortest option from {toType} is {shortest}")
-      if len(shortest) < len(longest):
-        print(f"for {c}: {len(shortest)} < {len(longest)}: {shortest} vs {longest} -> {shortestResult1} vs {longestResult1} -> {shortestResult2} vs {longestResult2} -> {shortestResult3} vs {longestResult3}")
-      result += shortest
-    totalComplexity += complexity(code, result)
+    groupsToType = countGroupsToType({code: 1}, 1, directionalKeypads)
+    print(f"Need to type {groupsToType} for {code}")
+    totalComplexity += groupComplexity(code, groupsToType)
 
   print(f"Result for part 2: {str(totalComplexity)}")
 
@@ -287,6 +331,7 @@ def solve():
   #typeIn("A", 1, False, '9')
   #print(typeIn("<", 3, True, 'A'))
   #+shortestOption(typeIn("2", 1, True, '0'))+shortestOption(typeIn("9", 1, True, '2'))+shortestOption(typeIn("A", 1, True, '9')))
+  #part2(False)
   part2(True)
   return
   toType = typeIn("4", 1, True or not useRealData, "3", 4)

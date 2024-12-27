@@ -22,3 +22,14 @@ v<<A>>^A<vA<A>>^AAvAA<^A>A -> <Av<AA>>^A (26 vs 10)
 v<<A>>^A<vA<A>>^AAvAA^<A>A -> <Av<AA>>^A (26 vs 10)
 v<<A>>^Av<A<A>>^AAvAA<^A>A -> <Av<AA>>^A (26 vs 10)
 v<<A>>^Av<A<A>>^AAvAA^<A>A -> <Av<AA>>^A (26 vs 10)
+
+CHECK: Groups with count:
+{'v<A': 2, '<A': 4, 'A': 6, '>>^A': 4, 'vA': 4, '^<A': 2, '>A': 3, 'v<<A': 2, '^A': 1, '>^A': 1} for v<A<AA>>^AvAA^<A>Av<<A>>^AvA^Av<<A>>^AAvA<A>^A<A>Av<A<A>>^AAAvA^<A>A
+Need to type
+{'v<A': 48, '<A': 65, 'A': 161, '>>^A': 69, 'vA': 65, '^<A': 41, '>A': 48, 'v<<A': 21, '^A': 14, '>^A': 10} for 029A
+
+---
+
+162348428375824 TOO LOW
+416929411346362 TOO HIGH
+196910339808654 finally, sic ...

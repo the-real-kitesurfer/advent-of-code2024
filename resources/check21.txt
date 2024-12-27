@@ -1,0 +1,24 @@
+4: <vA<AA>>^AAvA<^A>AvA^A     -> 3: v<<AA>^A>A -> 2: <<^A -> 1: 4
+                                    v<<AA>>A^A
+4: v<<A>>^A<vA<A>>^AAvAA<^A>A -> 3: <Av<AA>>^A -> 2: ^<<A -> 1: 4
+
+'<vA<AA>>^AAvA<^A>AvA^A'
+'<vA<AA>>^AAvA^<A>AvA^A'
+'v<A<AA>>^AAvA<^A>AvA^A'
+'v<A<AA>>^AAvA^<A>AvA^A'
+'v<<A>>^A<vA<A>>^AAvAA<^A>A'
+'v<<A>>^A<vA<A>>^AAvAA^<A>A'
+'v<<A>>^Av<A<A>>^AAvAA<^A>A'
+'v<<A>>^Av<A<A>>^AAvAA^<A>A'
+
+s: <vA<AA>>^AAvA<^A>AvA^A
+l: v<<A>>^A<vA<A>>^AAvAA<^A>A
+
+<vA<AA>>^AAvA<^A>AvA^A -> v<<AA>^A>A (22 vs 10)
+<vA<AA>>^AAvA^<A>AvA^A -> v<<AA>^A>A (22 vs 10)
+v<A<AA>>^AAvA<^A>AvA^A -> v<<AA>^A>A (22 vs 10)
+v<A<AA>>^AAvA^<A>AvA^A -> v<<AA>^A>A (22 vs 10)
+v<<A>>^A<vA<A>>^AAvAA<^A>A -> <Av<AA>>^A (26 vs 10)
+v<<A>>^A<vA<A>>^AAvAA^<A>A -> <Av<AA>>^A (26 vs 10)
+v<<A>>^Av<A<A>>^AAvAA<^A>A -> <Av<AA>>^A (26 vs 10)
+v<<A>>^Av<A<A>>^AAvAA^<A>A -> <Av<AA>>^A (26 vs 10)

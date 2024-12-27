@@ -199,19 +199,24 @@ def moveWide(warehouse, movement, botPosition):
     wallFound = False
     canMoveRobot = False
     for y in range(botPosition[1]-1, -1, -1):
+      debug(f"Checking row {y}")
       everythingFree = True
       emptyRowFound = True
       for x in range(len(warehouse[0])):
-        #debug(f"Trying to move bot {movement} from {botPosition}, checking position {x}, {y}: {warehouse[y][x]}")
-        if not (x,y-dY,'[') in movedBoxes and not (x,y-dY,']') in movedBoxes and not x == botPosition[0]:
+        debug(f"Trying to move bot {movement} from {botPosition}, checking position {x}, {y}: {warehouse[y][x]}")
+        if not (x,y-dY,'[') in movedBoxes and not (x,y-dY,']') in movedBoxes and not [x,y-dY] == botPosition:
+          # thanks to https://www.reddit.com/r/adventofcode/comments/1heoj7f/2024_day_15_part_2_more_sample_inputs_to_catch/ I realized the case that two boxes are diagonally touching, hence leaving still free space above the bot :face-palm
           # nothing below moved -> skip
+          debug(f"Nothing to do for {(x,y)} - botposition is {botPosition} vs {[x,y-dY]}")
           continue
         if warehouse[y][x] == '#':
+          debug(f"Wall found")
           everythingFree = False
           wallFound = True
           emptyRowFound = False
           break
         if warehouse[y][x] == ']':
+          debug(f"Right part of box found")
           everythingFree = False
           if not (x-1,y,'[') in movedBoxes:
             movedBoxes.append((x-1,y,'[')) #also move box to the left
@@ -219,6 +224,7 @@ def moveWide(warehouse, movement, botPosition):
             movedBoxes.append((x,y,']'))
           emptyRowFound = False
         elif warehouse[y][x] == '[':
+          debug(f"Left part of box found")
           everythingFree = False
           if not (x,y,'[') in movedBoxes:
             movedBoxes.append((x,y,'['))
@@ -260,7 +266,7 @@ def moveWide(warehouse, movement, botPosition):
       debug(f"emptyRowFound: {emptyRowFound} for {y}")
       for x in range(len(warehouse[0])):
         #debug(f"Trying to move bot {movement} from {botPosition}, checking position {x}, {y}: {warehouse[y][x]}")
-        if not (x,y-dY,'[') in movedBoxes and not (x,y-dY,']') in movedBoxes and not x == botPosition[0]:
+        if not (x,y-dY,'[') in movedBoxes and not (x,y-dY,']') in movedBoxes and not [x,y-dY] == botPosition:
           # nothing below moved -> skip
           debug(f"Skipping {(x,y)} - { (x,y-1)} not in {movedBoxes}")
           continue
@@ -323,7 +329,7 @@ def processMovements(warehouse, movements, botPosition, wide):
   noOps = 0
   for i, movement in enumerate(movements):
     debug(f"{movement} (Step {i})")
-    #if i > 30: exit()
+    #if i > 8: exit()
     if wide:
       if not moveWide(warehouse, movement, botPosition):
         noOps += 1
@@ -423,5 +429,5 @@ def part2(useRealData):
 def solve():
   #part1(True)
   part2(True) 
-  #tried:  1425075
+  #tried:  1425075 and 1413735
   #part 1: 1414416

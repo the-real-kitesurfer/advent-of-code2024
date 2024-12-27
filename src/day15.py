@@ -276,6 +276,7 @@ def moveWide(warehouse, movement, botPosition):
 def processMovements(warehouse, movements, botPosition, wide):
   n = 0
   for movement in movements:
+    print(f"{movement}")
     if wide:
       moveWide(warehouse, movement, botPosition)
       #n += 1
@@ -283,7 +284,7 @@ def processMovements(warehouse, movements, botPosition, wide):
       #  return
     else:
       move(warehouse, movement, botPosition)
-    printWarehouse(warehouse, botPosition, DEBUG)
+    printWarehouse(warehouse, botPosition, True or DEBUG)
 
 
 def sumOfBoxPositions(warehouse):
@@ -309,7 +310,6 @@ def sumOfBoxPositionsWide(warehouse):
 def printWarehouse(warehouse, bot, visible):
   if not visible:
     return
-  print("")
   for y,row in enumerate(warehouse):
     line = ""
     lastC = ''
@@ -323,6 +323,7 @@ def printWarehouse(warehouse, bot, visible):
           exit(-1)
         lastC = c
     print(line)
+  print("")
 
 def part1(useRealData):
   print("Day " + DAY + ", Part 1")

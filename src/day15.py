@@ -32,6 +32,9 @@ def makeWide(warehouse):
       if c == 'O':
         wideRow.append('[')
         wideRow.append(']')
+      elif c == '@': # not necessary, the warehouse gets '.' during transform() for the bot position!
+        wideRow.append('@')
+        wideRow.append('.')
       else:
         wideRow.append(c)
         wideRow.append(c)
@@ -134,6 +137,7 @@ def move(warehouse, movement, botPosition):
         return
 
 def moveWide(warehouse, movement, botPosition):
+  exitAtEnd = False
   isBox = False
   movedBoxes = []
 
@@ -142,149 +146,194 @@ def moveWide(warehouse, movement, botPosition):
     y = botPosition[1]
     dX = -1
     dY = 0
-    for x in range(botPosition[0]-1, 0, -1):
+    for x in range(botPosition[0]-1, 0-1, -1):
       #debug(f"Trying to move bot {movement} from {botPosition}, checking position {x}, {y}: {warehouse[y][x]}")
       if warehouse[y][x] == '#':
         break
       if warehouse[y][x] == ']':
-        movedBoxes.append((x,y))
+        movedBoxes.append((x,y,']'))
       elif warehouse[y][x] == '[':
-        movedBoxes.append((x,y))
+        movedBoxes.append((x,y,'['))
       elif warehouse[y][x] == '.':
         for i in range(len(movedBoxes), 0, -1):
         #for movedBox in movedBoxes:
           movedBox = movedBoxes[i-1]
-          warehouse[movedBox[1]+dY][movedBox[0]+dX] = warehouse[movedBox[1]][movedBox[0]]
+          warehouse[movedBox[1]+dY][movedBox[0]+dX] = movedBox[2]
           warehouse[movedBox[1]][movedBox[0]] = '.'
 
         botPosition[0] += dX
         botPosition[1] += dY
         warehouse[botPosition[1]][botPosition[0]] = '.'
         debug(f"Moved {len(movedBoxes)} box(es) {movement}, new botPosition: {botPosition}")
-        return
+        return True
 
   if movement == '>':
     y = botPosition[1]
     dX = +1
     dY = 0
-    for x in range(botPosition[0]+1, len(warehouse[0]), +1):
+    for x in range(botPosition[0]+1, len(warehouse[0])+1, +1):
       #debug(f"Trying to move bot {movement} from {botPosition}, checking position {x}, {y}: {warehouse[y][x]}")
       if warehouse[y][x] == '#':
         break
       if warehouse[y][x] == ']':
-        movedBoxes.append((x,y))
+        movedBoxes.append((x,y,']'))
       elif warehouse[y][x] == '[':
-        movedBoxes.append((x,y))
+        movedBoxes.append((x,y,'['))
       elif warehouse[y][x] == '.':
         for i in range(len(movedBoxes), 0, -1):
         #for movedBox in movedBoxes:
           movedBox = movedBoxes[i-1]
-          warehouse[movedBox[1]+dY][movedBox[0]+dX] = warehouse[movedBox[1]][movedBox[0]]
+          warehouse[movedBox[1]+dY][movedBox[0]+dX] = movedBox[2]
           warehouse[movedBox[1]][movedBox[0]] = '.'
 
         botPosition[0] += dX
         botPosition[1] += dY
         warehouse[botPosition[1]][botPosition[0]] = '.'
         debug(f"Moved {len(movedBoxes)} box(es) {movement}, new botPosition: {botPosition}")
-        return
+        return True
 
   if movement == '^':
     dX = 0
     dY = -1
-    for y in range(botPosition[1]-1, 0, -1):
+    everythingFree = False
+    wallFound = False
+    canMoveRobot = False
+    for y in range(botPosition[1]-1, -1, -1):
       everythingFree = True
-      wallFound = False
+      emptyRowFound = True
       for x in range(len(warehouse[0])):
         #debug(f"Trying to move bot {movement} from {botPosition}, checking position {x}, {y}: {warehouse[y][x]}")
-        if not (x,y+1) in movedBoxes and not x == botPosition[0]:
+        if not (x,y-dY,'[') in movedBoxes and not (x,y-dY,']') in movedBoxes and not x == botPosition[0]:
           # nothing below moved -> skip
           continue
         if warehouse[y][x] == '#':
           everythingFree = False
           wallFound = True
+          emptyRowFound = False
           break
         if warehouse[y][x] == ']':
           everythingFree = False
-          movedBoxes.append((x-1,y)) #also move box to the left
-          movedBoxes.append((x,y))
+          if not (x-1,y,'[') in movedBoxes:
+            movedBoxes.append((x-1,y,'[')) #also move box to the left
+          if not (x,y,']') in movedBoxes:
+            movedBoxes.append((x,y,']'))
+          emptyRowFound = False
         elif warehouse[y][x] == '[':
           everythingFree = False
-          movedBoxes.append((x,y))
-          movedBoxes.append((x+1,y)) #also move box to the right
+          if not (x,y,'[') in movedBoxes:
+            movedBoxes.append((x,y,'['))
+          if not (x+1,y,']') in movedBoxes:
+            movedBoxes.append((x+1,y,']')) #also move box to the right
+          emptyRowFound = False
         #elif warehouse[y][x] == '.':
         # nothing to do -> we found an empty space!
-      
+
+      if emptyRowFound:      
+        canMoveRobot = True
+        break
       if wallFound:
         break
 
-      if everythingFree:
-        for i in range(len(movedBoxes), 0, -1):
-        #for movedBox in movedBoxes:
-          movedBox = movedBoxes[i-1]
-          warehouse[movedBox[1]+dY][movedBox[0]+dX] = warehouse[movedBox[1]][movedBox[0]]
-          warehouse[movedBox[1]][movedBox[0]] = '.'
+    #if everythingFree:
+    if canMoveRobot:
+      for i in range(len(movedBoxes), 0, -1):
+      #for movedBox in movedBoxes:
+        movedBox = movedBoxes[i-1]
+        warehouse[movedBox[1]+dY][movedBox[0]+dX] = movedBox[2]
+        warehouse[movedBox[1]][movedBox[0]] = '.'
 
-        botPosition[0] += dX
-        botPosition[1] += dY
-        warehouse[botPosition[1]][botPosition[0]] = '.'
-        debug(f"Moved {len(movedBoxes)} box(es) {movement}, new botPosition: {botPosition}")
-        return
+      botPosition[0] += dX
+      botPosition[1] += dY
+      warehouse[botPosition[1]][botPosition[0]] = '.'
+      debug(f"Moved {len(movedBoxes)} box(es) {movement}, new botPosition: {botPosition}")
+      return True
 
   if movement == 'v':
     dX = 0
     dY = +1
+    everythingFree = False
+    wallFound = False
+    canMoveRobot = False
     for y in range(botPosition[1]+1, len(warehouse), +1):
       everythingFree = True
-      wallFound = False
+      emptyRowFound = True
+      debug(f"emptyRowFound: {emptyRowFound} for {y}")
       for x in range(len(warehouse[0])):
         #debug(f"Trying to move bot {movement} from {botPosition}, checking position {x}, {y}: {warehouse[y][x]}")
-        if not (x,y-1) in movedBoxes and not x == botPosition[0]:
+        if not (x,y-dY,'[') in movedBoxes and not (x,y-dY,']') in movedBoxes and not x == botPosition[0]:
           # nothing below moved -> skip
+          debug(f"Skipping {(x,y)} - { (x,y-1)} not in {movedBoxes}")
           continue
         if warehouse[y][x] == '#':
           wallFound = True
           everythingFree = False
+          emptyRowFound = False
           break
         if warehouse[y][x] == ']':
           everythingFree = False
-          movedBoxes.append((x-1,y)) #also move box to the left
-          movedBoxes.append((x,y))
+          if not (x-1,y,'[') in movedBoxes:
+            movedBoxes.append((x-1,y,'[')) #also move box to the left
+          if not (x,y,']') in movedBoxes:
+            movedBoxes.append((x,y,']'))
+          emptyRowFound = False
         elif warehouse[y][x] == '[':
           everythingFree = False
-          movedBoxes.append((x,y))
-          movedBoxes.append((x+1,y)) #also move box to the right
+          if not (x,y,'[') in movedBoxes:
+            movedBoxes.append((x,y,'['))
+          if not (x+1,y,']') in movedBoxes:
+            movedBoxes.append((x+1,y,']')) #also move box to the right
+          emptyRowFound = False
         #elif warehouse[y][x] == '.':
           # nothing to do -> we found an empty space!
-
+    
+      if emptyRowFound:      
+        canMoveRobot = True
+        break
       if wallFound:
         break
 
-      if everythingFree:
-        for i in range(len(movedBoxes), 0, -1):
-        #for movedBox in movedBoxes:
-          movedBox = movedBoxes[i-1]
-          warehouse[movedBox[1]+dY][movedBox[0]+dX] = warehouse[movedBox[1]][movedBox[0]]
-          warehouse[movedBox[1]][movedBox[0]] = '.'
+    #if everythingFree:
+    if canMoveRobot:
+      for i in range(len(movedBoxes), 0, -1):
+      #for movedBox in movedBoxes:
+        movedBox = movedBoxes[i-1]
+        debug(f"Moving box {movedBox}")
+        if len(movedBoxes) > 400:
+          if not exitAtEnd:
+            printWarehouse(warehouse, botPosition, True)
+          exitAtEnd = True
 
-        botPosition[0] += dX
-        botPosition[1] += dY
-        warehouse[botPosition[1]][botPosition[0]] = '.'
-        debug(f"Moved {len(movedBoxes)} box(es) {movement}, new botPosition: {botPosition}")
-        return
+        warehouse[movedBox[1]+dY][movedBox[0]+dX] = movedBox[2]
+        warehouse[movedBox[1]][movedBox[0]] = '.'
+
+      botPosition[0] += dX
+      botPosition[1] += dY
+      warehouse[botPosition[1]][botPosition[0]] = '.'
+      debug(f"Moved {len(movedBoxes)} box(es) {movement}, new botPosition: {botPosition}")
+      if exitAtEnd:
+        printWarehouse(warehouse, botPosition, True)
+        exit(-2)
+      return True
+  
+  return False # nothing moved
 
 
 def processMovements(warehouse, movements, botPosition, wide):
   n = 0
-  for movement in movements:
-    print(f"{movement}")
+  noOps = 0
+  for i, movement in enumerate(movements):
+    debug(f"{movement} (Step {i})")
+    #if i > 30: exit()
     if wide:
-      moveWide(warehouse, movement, botPosition)
-      #n += 1
+      if not moveWide(warehouse, movement, botPosition):
+        noOps += 1
+      n += 1
       #if n > 100:
       #  return
     else:
       move(warehouse, movement, botPosition)
-    printWarehouse(warehouse, botPosition, True or DEBUG)
+    printWarehouse(warehouse, botPosition, DEBUG)
+  print(f"noOps: {noOps} of {n} movements overall")
 
 
 def sumOfBoxPositions(warehouse):
@@ -302,6 +351,7 @@ def sumOfBoxPositionsWide(warehouse):
     for x, c in enumerate(row):
       if c == '[':
         result = gps(x,y)
+        #result = gpsWide(x,y,len(warehouse[0]),len(warehouse)) # checked, this does not work here
         debug(f"Result for {(x,y)}: {result}")
         sum += result
 
@@ -310,6 +360,9 @@ def sumOfBoxPositionsWide(warehouse):
 def printWarehouse(warehouse, bot, visible):
   if not visible:
     return
+  somethingWentWrong = False
+  boxCount = 0
+  wallCount = 0
   for y,row in enumerate(warehouse):
     line = ""
     lastC = ''
@@ -318,12 +371,22 @@ def printWarehouse(warehouse, bot, visible):
         line += '@'
       else:
         line += c
+
+        if c == ']':
+          boxCount += 1
+        if c == '#':
+          wallCount += 1
+
         if (c == '[' and lastC == '[') or (c == ']' and lastC == ']'):
           print("SOMETHING WENT WRONG")
-          exit(-1)
+          somethingWentWrong = True
+
         lastC = c
     print(line)
   print("")
+  print(f"Found {boxCount} boxes and {wallCount} walls")
+  if somethingWentWrong:
+    exit(-1)
 
 def part1(useRealData):
   print("Day " + DAY + ", Part 1")
@@ -355,8 +418,10 @@ def part2(useRealData):
 
   result = sumOfBoxPositionsWide(warehouse)
 
-  print(f"Result for part 2: {str(result)} (should be 618 for the small example and 9021 for the big example ...)")
+  print(f"Result for part 2: {str(result)} (should be 618 for the small example and 9021 for the big example ... 1425075 is wrong!)")
 
 def solve():
   #part1(True)
-  part2(False)
+  part2(True) 
+  #tried:  1425075
+  #part 1: 1414416

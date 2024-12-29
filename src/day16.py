@@ -6,6 +6,8 @@ from functools import lru_cache
 maze = []
 
 def transform(input):
+  global maze
+  maze = []
   startPos = (-1,-1,'>')
   endPos = (-1,-1,'?')
   for y,line in enumerate(input):
@@ -21,6 +23,7 @@ def dijkstras(start):
   unvisited = []
   weights = {}
   distances = {start: 0}
+  previous = {}
   neighbours = {}
   # initialize list of univisited nodes with reindeers at any valid position
   for y in range(len(maze)):
@@ -62,14 +65,21 @@ def dijkstras(start):
     debug(f"Picked node {picked} with distance {distances[picked]}")
     # picked node is the end pos (regardless of direction)
     if maze[picked[1]][picked[0]] == 'E':
-      return distances[picked]
+      return distances[picked], previous
     
     # update distances for all neighbours
     debug(f"Updating neighbours of {picked}: {neighbours[picked]}")
     for neighbour in neighbours[picked]:
       if neighbour in unvisited and (neighbour not in distances or distances[neighbour] > distances[picked] + weights[picked, neighbour]):
         distances[neighbour] = distances[picked] + weights[picked, neighbour]
-        debug(f"New distance of neighbour {neighbour} is {distances[neighbour]}")
+        debug(f"New distance of neighbour {neighbour} is {distances[neighbour]} via {picked}")
+        previous[neighbour] = [picked] # remove old entries in previous, the new path is shorter!
+      elif neighbour in unvisited and (distances[neighbour] == distances[picked] + weights[picked, neighbour]):
+        debug(f"Neighbour {neighbour} can also be reached from {picked} with same distance, {distances[neighbour]}")
+        previous[neighbour].append(picked)
+      if neighbour in [(15, 1, '^'), (15, 2, '^')]:
+        print(f"Previous for {neighbour}: {previous[neighbour]}; processing {picked}")
+
     
     # picked node processed -> remove from list
     #debug(f"Removing {pickedIndex}th element from list of unvisited {len(unvisited)} ...")
@@ -329,20 +339,83 @@ def shortestPathViaList(startPos, endPos):
         optionsByMinimumLength[minLen].append((newPos, visited, score + 1000, True))
     
 
-def printBots(botsOnGrid):
-  print("---")
-  for row in botsOnGrid:
+def printTiles(tiles):
+  print("-- TOP --")
+  for y, row in enumerate(maze):
     line = ""
-    for x in range(len(row)):
-      if row[x] == 0:
-        line += ' '
-      elif row[x] > 9:
-        line += '#'
+    for x, c in enumerate(row):
+      if (x,y) in tiles:
+        line += '0'
       else:
-        line += str(row[x])
-    print(line)
-  print("---")
+        line += c
+    print(f"{line}")
+  print("--BOTTOM --")
 
+
+def findBestPaths(previous, endPos):
+  bestPaths = []
+  for posAndDir in previous.keys():
+    print(f"Comparing {posAndDir} to {endPos}")
+    if (posAndDir[0], posAndDir[1]) == (endPos[0], endPos[1]):
+      bestPaths.append(posAndDir)
+      break
+  processed = []
+  print(f"Starting with {bestPaths}")
+  while True:
+    unchanged = True
+    for posAndDir in bestPaths:
+      if not posAndDir in processed:
+        print(f"Processed {posAndDir}")
+        processed.append(posAndDir)
+        unchanged = False
+
+        if posAndDir in previous:
+          for prevPosAndDir in previous[posAndDir]:
+            if not prevPosAndDir in bestPaths:
+              bestPaths.append(prevPosAndDir)
+    if unchanged:
+      return bestPaths
+
+def findTilesOnBestPaths(reindeer, bestLength):
+    debug(f"Checking {reindeer}, {bestLength} left to spend")
+    tilesOnBestPaths = []
+    if bestLength < 0 or not isValid(reindeer):
+      return tilesOnBestPaths
+
+    tilesOnBestPaths.append(reindeer)
+    if maze[reindeer[1]][reindeer[0]] == 'E':
+      print(f"Reached the end with {reindeer}, {bestLength} budget left")
+      return tilesOnBestPaths
+
+    reindeerMoved = move(reindeer)
+    newTilesOnBestPaths = findTilesOnBestPaths(reindeerMoved, bestLength - 1)
+    for tile in newTilesOnBestPaths:
+      if not tile in tilesOnBestPaths:
+        tilesOnBestPaths.append(tile)
+
+    reindeerTurnedLeft = turn(reindeer, True)
+    newTilesOnBestPaths = findTilesOnBestPaths(reindeerTurnedLeft, bestLength - 1000)
+    for tile in newTilesOnBestPaths:
+      if not tile in tilesOnBestPaths:
+        tilesOnBestPaths.append(tile)
+
+    reindeerTurnedRight = turn(reindeer, False)
+    newTilesOnBestPaths = findTilesOnBestPaths(reindeerTurnedRight, bestLength - 1000)
+    for tile in newTilesOnBestPaths:
+      if not tile in tilesOnBestPaths:
+        tilesOnBestPaths.append(tile)
+
+    if len(tilesOnBestPaths) > 1:
+      return tilesOnBestPaths
+    else:
+      return []
+
+def countUniqueTiles(tilesOnBestPath):
+  uniqueTiles = []
+  for dirAndPos in tilesOnBestPath:
+    if not (dirAndPos[0], dirAndPos[1]) in uniqueTiles:
+      uniqueTiles.append((dirAndPos[0], dirAndPos[1]))
+  return uniqueTiles
 
 def part1(useRealData):
   print("Day " + DAY + ", Part 1")
@@ -350,20 +423,27 @@ def part1(useRealData):
   input = fetchData(DAY, useRealData)
   startingPos, endPos = transform(input)
 
-  pathLength = dijkstras(startingPos)
+  pathLength, _ = dijkstras(startingPos)
 
-  print(f"Result for part 1: {str(pathLength)} (expected: 11048)")
+  print(f"Result for part 1: {str(pathLength)} (expected: 7036 for the small and 11048 for the large exampkle)")
 
 def part2(useRealData):
   print("Day " + DAY + ", Part 2")
 
   input = fetchData(DAY, useRealData)
-  startingPos = transform(input)
+  startPos, endPos = transform(input)
 
-  pathLength = shortestPath((startingPos[0], startingPos[1], '>'), [], False)
+  # idea: start from start, and take any valid path WHILE the distance is below the minimal one ....
+  pathLength, visited = dijkstras(startPos)
 
-  print(f"Result for part 2: {str(pathLength)}")
+  print(f"pathLength: {pathLength}, len(visited): {len(visited)}")
+  tilesOnBestPath = findBestPaths(visited, endPos)
+  #tilesOnBestPath = findTilesOnBestPaths(startPos, 0*7036+1*11048+0*72428)
+  uniqueTiles = countUniqueTiles(tilesOnBestPath)
+  printTiles(uniqueTiles)
+
+  print(f"Result for part 2: {str(len(uniqueTiles))} (expected 45 for the small and 64 for the large example)")
 
 def solve():
-  part1(True)
-  #part2(True)
+  #part1(False)
+  part2(True)

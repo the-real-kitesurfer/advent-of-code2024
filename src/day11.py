@@ -41,7 +41,7 @@ def blinkSingleStone(stone, timesToBlink):
 
   newStones3 = []
   for newStone in newStones:
-    if timesToBlink > 0:
+    if timesToBlink > 1:
       newStones2 = blinkSingleStone(newStone, timesToBlink - 1)
     else:
       newStones2 = [newStone]
@@ -51,12 +51,57 @@ def blinkSingleStone(stone, timesToBlink):
   #if DEBUG: debug("New stones for input stones " + str(stones) + " are " + str(newStones))
   return newStones3
 
+@lru_cache(maxsize=None)
+def blinkOnce(stone):
+  newStones = []
+  m=floor(log(stone,10))+1 if stone!=0 else 1
+  if stone == 0:
+    newStones.append(1)
+  elif m % 2 == 0:
+    #debug("Splitting " + stone + " into " + str(int(stone[0:int(len(stone)/2)])) + " and " + str(int(stone[int(len(stone)/2):])))
+    newStones.append(stone//10**(m//2))
+    newStones.append(stone%10**(m//2))
+  else:
+    newStones.append(stone * 2024)
+
+  return newStones
+
 def blink(stones, timesToBlink):
   newStones = []
   for stone in stones:
     for newStone in blinkSingleStone(stone, timesToBlink):
       newStones.append(newStone)
   return newStones
+
+def blinkGroupWise(stones, timesToBlink):  
+  cntPerStone = {}
+  for stone in stones:
+    cntPerStone[stone] = 1
+
+  for i in range(timesToBlink):
+    print(f"Blink #{i}: cntPerStone = {cntPerStone}")
+    print()
+    # store groups from previous round in new list
+    newCntPerStone = {}
+
+    # blink once for each stone from the (stable) list
+    for stone in cntPerStone:
+      newStones = blinkOnce(stone)
+      # add the new stones (weighted!)
+      for newStone in newStones:
+        if not newStone in newCntPerStone:
+          newCntPerStone[newStone] = cntPerStone[stone]
+        else:
+          newCntPerStone[newStone] += cntPerStone[stone]
+
+    # use the new counts per stone for the next round
+    cntPerStone = newCntPerStone
+
+  stoneCnt = 0
+  for stone in cntPerStone:
+    stoneCnt += cntPerStone[stone]
+
+  return stoneCnt
 
 #memo = {}
 @lru_cache(maxsize=None)
@@ -132,7 +177,7 @@ def part1(useRealData):
 
   #for i in range(75):
   #print ("Blinking #" + str(i+1))
-  stones = blink(stones, 74)
+  stones = blink(stones, 25)
 
   print("Result for part 1: " + str(len((stones))))
 
@@ -143,66 +188,13 @@ def part2(useRealData):
   input = fetchData(DAY, useRealData)
   initialStones = transform(input)
 
-  stoneCount = 0
-  lastPrintedCount = 1
-  stonesPerBlinkCount = {}
-  if useRealData:
-    #stonesPerBlinkCount = {75:initialStones}
-    stonesPerBlinkCount[75] = []
-    for initialStone in initialStones:
-      stonesPerBlinkCount[75].append((initialStone, 1))
-  else:
-    #stonesPerBlinkCount = {25: initialStones}
-    stonesPerBlinkCount[25] = []
-    for initialStone in initialStones:
-      stonesPerBlinkCount[25].append((initialStone, 1))
- # new idea: put computations into list (as (stone,blinks); process entry and store new entry - (newStone_i, blinks -1); then process always the smallest blink number to keep the size of the queue small
-  while len(stonesPerBlinkCount) > 0:
-    # find smallest blink count
-    # blink
-    # update stonesPerCount
-    # count number of new stones (i.e., newStones - oldStones)
-    # print("len(stonesPerBlinkCount): " + str(len(stonesPerBlinkCount)))
-    lowestBlinkCount = -1
-    highestBlinkCount = -1
-    for blinkCount in stonesPerBlinkCount.keys():
-      if len(stonesPerBlinkCount[blinkCount]) > 0 and (blinkCount < lowestBlinkCount or lowestBlinkCount == -1):
-        lowestBlinkCount = blinkCount
-      if len(stonesPerBlinkCount[blinkCount]) > 0 and (blinkCount > highestBlinkCount):
-        highestBlinkCount = blinkCount
-    if lowestBlinkCount == -1:
-      break
-    
-    if stoneCount > 10 * lastPrintedCount:
-      lastPrintedCount = stoneCount
-      if DEBUG: debug("Current stoneCount: " + str(stoneCount) + "; lbc: " + str(lowestBlinkCount) + ", hbc: " + str(highestBlinkCount))
-    #if DEBUG: debug("Current stoneCount: " + str(stoneCount) + "; lbc: " + str(lowestBlinkCount) + ", hbc: " + str(highestBlinkCount) + ": spbc: " + str(stonesPerBlinkCount))
-    stone,noOfSameStone = stonesPerBlinkCount[lowestBlinkCount].pop()
-
-    stoneCount -= noOfSameStone
-    newStones = blinkSingleStone(stone, 1)
-    #newStones = blinkDynamic([stone], timesToBlink)
-    stoneCount += noOfSameStone*len(newStones)
-    #if len(newStones) > 1: debug("Split stone '" + str(stone) + "' into " + str(len(newStones)) + " stones, new stoneCount: " + str(stoneCount))
-    if lowestBlinkCount > 1:
-      if not (lowestBlinkCount - 1) in stonesPerBlinkCount:
-        stonesPerBlinkCount[lowestBlinkCount - 1] = []
-      for newStone in newStones:
-        added = False
-        for i, (existingStone, existingCount) in enumerate(stonesPerBlinkCount[lowestBlinkCount - 1]):
-          if existingStone == newStone:
-            stonesPerBlinkCount[lowestBlinkCount - 1].pop(i)
-            stonesPerBlinkCount[lowestBlinkCount - 1].append((newStone, existingCount + noOfSameStone))
-            added = True
-            break
-        if not added:
-          stonesPerBlinkCount[lowestBlinkCount - 1].append((newStone, noOfSameStone))
+  stoneCount = blinkGroupWise(initialStones, 75)
 
   print("Result for part 2: " + str(stoneCount))
 
 
 def solve():
   #part1(True)
-  part2(False)
+  part2(True)
 
 

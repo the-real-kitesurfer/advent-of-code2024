@@ -4,324 +4,346 @@ from helper import DEBUG, debug, fetchData
 from functools import lru_cache
 import itertools
 
-def permute(sequence):
-  actions = []
-  part = []
-  for c in sequence:
-    if c == 'A':
-      actions.append(part)
-      part = []
-    else:
-      part.append(c)
-
-  debug(f"Parts for {sequence}: {actions}")
-
-  #permutations = list(itertools.permutations(parts))
-  permutations = []
-  for action in actions:
-    for p in itertools.permutations(action):
-      debug(f"Processing {p}")
-      toType = ""
-      for c in p:
-        toType += c[0]
-      
-      permutations.append(toType + 'A')
-
-  debug(f"Created {len(permutations)} permutations for list with {len(actions)} actions - {permutations} from {sequence} resp. {actions} as a list; first permutation: {permutations[0][0]}")
-
-  return permutations
-
-
-def isSequenceValid(inFocus, sequence, keypad):
-  # inFocus = 'A'
-  for c in sequence:
-    debug(f"Validating {c} in sequence {sequence} on keypad {keypad}")
-    if c == 'A':
-      continue
-
-    inFocus = changeFocus(inFocus, c, keypad)
-    if not inFocus:
-      return False
-  return True
-
-def changeFocus(inFocus, typed, keypad):
-  debug(f"Changing focus from {inFocus} after pressing {typed} on keypad {keypad}")
-  #1: robot on door, #2: robot on robot 1, #3: robot on robot 2, #4: I
-  if keypad == 1:
-    if typed == '<':
-      if inFocus == 'A':
-        return '0'
-      else:
-        if int(inFocus) < 1:
-          return None
-        else:
-          debug(f"RETURNING_A {str(int(inFocus)-1)[0]}")
-          return str(int(inFocus)-1)[0]
-    if typed == '>':
-      if inFocus == '0':
-        return 'A'
-      elif inFocus == 'A':
-        return None # not allowed!
-      else:
-        debug(f"RETURNING_B {str(int(inFocus)+1)[0]}")
-        return str(int(inFocus)+1)[0]
-    if typed == '^':
-      if inFocus == 'A':
-        return '3'
-      elif inFocus == '0':
-        return '2'
-      else:
-        debug(f"RETURNING_C {str(int(inFocus)+3)[0]}")
-        return str(int(inFocus)+3)[0]
-    if typed == 'v':
-      if inFocus == '3':
-        return 'A'
-      elif inFocus == '2':
-        return '0'
-      elif inFocus == 'A':
-        return None # not allowed!
-      else:
-        if int(inFocus) < 3:
-          return None
-        else:
-          debug(f"RETURNING_D {str(int(inFocus)-3)[0]}")
-          return str(int(inFocus)-3)[0]
-
-  # keypad 2..4:
+def fromCoordinate(pos, isDoor):
+  if isDoor:
+    coordinates = {
+      '7': (1,1),
+      '8': (2,1),
+      '9': (3,1),
+      '4': (1,2),
+      '5': (2,2),
+      '6': (3,2),
+      '1': (1,3),
+      '2': (2,3),
+      '3': (3,3),
+      '0': (2,4),
+      'A': (3,4)
+    }
   else:
-    if inFocus == '<' and typed == '>':
-      return 'v'
-    elif inFocus == '>' and typed == '<':
-      return 'v'
-    elif inFocus == '>' and typed == '^':
-      return 'A'
-    elif inFocus == 'v' and typed == '<':
-      return '<'
-    elif inFocus == 'v' and typed == '>':
-      return '>'
-    elif inFocus == 'v' and typed == '^':
-      return '^'
-    elif inFocus == '^' and typed == '>':
-      return 'A'
-    elif inFocus == '^' and typed == 'v':
-      return 'v'
-    elif inFocus == 'A' and typed == '<':
-      return '^'
-    elif inFocus == 'A' and typed == 'v':
-      return '>'
-  debug(f"Oops ... can't change focus on keypad {keypad} from {inFocus} when typing {typed}")
-  return None
+    coordinates = {
+    '^': (2,1),
+    'A': (3,1),
+    '<': (1,2),
+    'v': (2,2),
+    '>': (3,2)
+    }
 
-def reposition(c, inFocus, keypad):
-  debug(f"repositioning focus {inFocus} for {c}")
-  #1: robot on door, #2: robot on robot 1, #3: robot on robot 2, #4: I
-  if keypad == 1:
-    if c in ['7', '8', '9']:
-      if not inFocus in ['7', '8', '9']:
-        toType = '^'
-      #focus in right row
-      elif c == '9':
-        toType = '>'
-      elif inFocus == '7':
-        toType = '>'
-      else:
-        toType = '<'
+  for key in coordinates:
+    if coordinates[key] == pos:
+      return key
+  debug(f"Did not find key for {pos} (onDoor: {isDoor})")
+  return "?"
 
-    elif c in ['4', '5', '6']:
-      if not inFocus in ['4', '5', '6']:
-        if inFocus in ['7', '8', '9']:
-          toType = 'v'
-        else:
-          toType = '^'
-      #focus in right row
-      elif c == '6':
-        toType = '>'
-      elif inFocus == '4':
-        toType = '>'
-      else:
-        toType = '<'
+def validate(typed, isFirstKeypad, inFocus):
+  focusedPos = coordinate(inFocus, isFirstKeypad)
+  for i, c in enumerate(typed):
+    if c == '<': focusedPos = (focusedPos[0] - 1, focusedPos[1])
+    if c == '>': focusedPos = (focusedPos[0] + 1, focusedPos[1])
+    if c == '^': focusedPos = (focusedPos[0], focusedPos[1]-1)
+    if c == 'v': focusedPos = (focusedPos[0], focusedPos[1]+1)
+    keyInFocus = fromCoordinate(focusedPos, isFirstKeypad)
+    if keyInFocus == '?':
+      debug(f"Lost focus when typing character {i} ({c}) from {typed} with focus on {inFocus} on isFirstKeypad: {isFirstKeypad}")
+      return keyInFocus
+  return keyInFocus
 
-    elif c in ['1', '2', '3']:
-      if not inFocus in ['1', '2', '3']:
-        if inFocus in ['4', '5', '6']:
-          toType = 'v'
-        else:
-          toType = '^'
-      #focus in right row
-      elif c == '3':
-        toType = '>'
-      elif inFocus == '1':
-        toType = '>'
-      else:
-        toType = '<'
-
-    elif c in ['0', 'A']:
-      if not inFocus in ['1', '0', 'A']:
-        toType = 'v'
-      elif inFocus == '1':
-        toType = '>'
-      elif c == '0' and inFocus == 'A':
-        toType = '<'
-      elif c == 'A' and inFocus == '0':
-        toType = '>'
-
-  # keypad 2..4
+@lru_cache(maxsize=None)
+def coordinate(c, isDoor):
+  if isDoor:
+    coordinates = {
+      '7': (1,1),
+      '8': (2,1),
+      '9': (3,1),
+      '4': (1,2),
+      '5': (2,2),
+      '6': (3,2),
+      '1': (1,3),
+      '2': (2,3),
+      '3': (3,3),
+      '0': (2,4),
+      'A': (3,4)
+    }
   else:
-    if c == 'A':
-      if inFocus in ['v', '>']:
-        toType = '^'
-      else:
-        toType = '>'
+    coordinates = {
+    '^': (2,1),
+    'A': (3,1),
+    '<': (1,2),
+    'v': (2,2),
+    '>': (3,2)
+    }
 
-    if c == '^':
-      if inFocus in ['v', '>']:
-        toType = '^'
-      elif inFocus == '<':
-        toType = '>'
-      else:
-        toType = '<'
+  return coordinates[c]
 
-    if c == 'v':
-      if inFocus in ['^', 'A']:
-        toType = 'v'
-      elif inFocus == '<':
-        toType = '>'
-      else:
-        toType = '<'
-
-    if c == '<':
-      if inFocus in ['^', 'A']:
-        toType = 'v'
-      else:
-        toType = '<'
-
-    if c == '>':
-      if inFocus in ['<', 'v']:
-        toType = '>'
-      else:
-        toType = 'v'
-
-  debug(f"Typed {toType} for {c} with focus {inFocus}")
-  oldFocus = inFocus
-  inFocus = changeFocus(inFocus, toType, keypad)
-  #if not inFocus:
-    #print(f"Lost focus on keypad {keypad} for {toType} with old focus {oldFocus}")
-    #exit()
-  debug(f"New focus: {inFocus}")
-  return toType, inFocus
-
-
-def tpyeIn(c, inFocus, keypad):
-  tries = 0
-  toType = ""
-  while not c == inFocus:
-    prevFocus = inFocus
-    typeHere, inFocus = reposition(c, inFocus, keypad)
-    debug(f"Typed {typeHere} for {c}, new focus {inFocus}")
-    if not inFocus:
-      print(f"Oops, lost focus for {c} with focus {prevFocus} on {keypad}")
-      exit()
-    toType += typeHere
-    tries += 1
-    if tries % 1000 == 0:
-      print(f"Stuck (?) with {tries} tries on c={c} with focus {inFocus} on {keypad}")
-  
-  debug("ACTIVATE")
-  toType += 'A'
-  
-  return toType
-
-def typeCode(codesToType, keypad):
-  debug(f"Called typeCode for {codesToType}, {keypad}")
-  codes = []
-  if keypad > 1:
-    for codeToType in codesToType:
-      debug(f"Typing {codeToType} on keypad {keypad - 1}")
-      newCodes = typeCode([codeToType], keypad - 1)
-      debug(f"Found {len(newCodes)} codes for {codeToType} on keypad {keypad}, first code: {newCodes[0]}")
-      codes += newCodes
+@lru_cache(maxsize=None)
+def deltaToKeys(x,y, xFirst):
+  keysForX = {
+    -2: "<<",
+    -1: "<",
+    0: "",
+    +1: ">",
+    +2: ">>",
+  }    
+  keysForY = {
+    -3: "^^^",
+    -2: "^^",
+    -1: "^",
+    0: "",
+    +1: "v",
+    +2: "vv",
+    +3: "vvv"
+  }    
+  #return [keysForX[x] + keysForY[y] + 'A', keysForY[y] + keysForX[x] + 'A']
+  if xFirst:
+    return keysForX[x] + keysForY[y] + 'A'
   else:
-    codes += codesToType
+    return keysForY[y] + keysForX[x] + 'A'
 
-  debug(f"These are the new codes from {keypad - 1}: {codes}")
+@lru_cache(maxsize=None)
+def findRoutes(c1, c2, isFirstKeypad):
+  pos1, pos2 = coordinate(c1, isFirstKeypad), coordinate(c2, isFirstKeypad)
+  # try to find optimal order without options -> maybe by identifying blocks: best solution for each current,next pair across 3 or more levels!?
+  if isFirstKeypad: #the 1x9 grid on the final door
+    xFirst = pos1[0] > pos2[0]
+    if c1 in ['0', 'A'] and c2 in ['7', '4', '1']: #make sure to avoid the void by FIRST going up and then left
+      xFirst = False
+    if c1 in ['7', '4', '1'] and c2 in ['0', 'A']: #make sure to avoid the void by FIRST going right and then down
+      xFirst = True
+  else: # the <^v> grid on one of the robots
+    xFirst = pos1[0] > pos2[0] # ok, admittedly pure guessing. "pos1 < pos2" worked for both the sample and real data in part1, but > yields WAY lower counts in part 2 :shrug
+    if c1 in ['^', 'A'] and c2 == '<': #make sure to avoid the void by FIRST going down and then left
+      xFirst = False
+    if c1 in ['<'] and c2 in ['^', 'A']: #make sure to avoid the void by FIRST going right and then up
+      xFirst = True
 
+  #debug(f"{pos1} -> {pos2} = {deltaToKeys(pos2[0] - pos1[0], pos2[1] - pos1[1], xFirst)} with xFirst = {xFirst}")
+  return deltaToKeys(pos2[0] - pos1[0], pos2[1] - pos1[1], xFirst)
+
+def findRoutesOLD(c1, c2, keypad):
   options = []
-  shortestCode = -1
-  for code in codes:
+  for defaultXFirst in [True, False]:
+    xFirst = defaultXFirst
+    if keypad == 1: #the 1x9 grid on the final door
+      if defaultXFirst and c1 in ['0', 'A']:
+        xFirst = False
+      if not defaultXFirst and c1 in ['7', '4', '1']:
+        xFirst = True
+    else: # the <^v> grid on one of the robots
+      if defaultXFirst and c1 in ['^', 'A']:
+        xFirst = False
+      if not defaultXFirst and c1 in ['<']:
+        xFirst = True
+
+    pos1, pos2 = coordinate(c1, keypad == 1), coordinate(c2, keypad == 1)
+    #debug(f"{pos1} -> {pos2} = {deltaToKeys(pos2[0] - pos1[0], pos2[1] - pos1[1], xFirst)} with xFirst = {xFirst}")
+    for option in deltaToKeys(pos2[0] - pos1[0], pos2[1] - pos1[1], xFirst):
+      # check: use only VALID sequences here ...
+      if not validate(option, keypad, c1) == '?':
+        options.append(option)
+  return options
+
+def countGroupsToType(groupsWithCountToType, keypad, directionalKeypads):
+  debug(f"Counting groups for {groupsWithCountToType} on {keypad}")
+  if keypad == 1:
+    debug("")
+
+  groupsWithCount = {}
+  for groupWithCountToType in groupsWithCountToType:
+    toType = ""
     inFocus = 'A'
-    toTypeForCode = ""
-    for c in code:
-      debug(f"Typing for {c} from {code} with focus {inFocus} on {keypad} ...")
-      toType = tpyeIn(c, inFocus, keypad)
-      debug(f"Typing for {c} from {code} with focus {inFocus} on {keypad} -> {toType}")
+    for i, c in enumerate(groupWithCountToType):
+      if i % 10000000 == -1:
+        print(f"Finding routes for {i}th of {len(groupWithCountToType)} chars on keypad {keypad} ({(100*i)//len(groupWithCountToType)}%)")
+      toType += findRoutes(inFocus, c, keypad == 1)
+      #for route in findRoutes(inFocus, c, keypad == 1):
+      #  routesForC.append(route)
       inFocus = c
-      toTypeForCode += toType
 
-    print(f"toTypeForCode: {toTypeForCode}")
-    allPermutations = permute(toTypeForCode)
-    debug(f"Found toTypeForCode = {toTypeForCode}, created permutations: {allPermutations}")
-    for permutation in allPermutations:
-      if isSequenceValid('A', permutation, keypad):
-        print(f"Valid: {permutation} on {keypad}")
-        options.append(permutation)
-        #print(f"Checking if {permutation} is the shortest option")
-        if shortestCode == -1 or shortestCode > len(permutation):
-          shortestCode = len(permutation)
+    actionGroups = toType.split('A')
+    for i, actionGroup in enumerate(actionGroups):
+      if i == len(actionGroups) - 1:
+        continue # skip the last, entry group
+      if not actionGroup + 'A' in groupsWithCount:
+        groupsWithCount[actionGroup + 'A'] = groupsWithCountToType[groupWithCountToType]
       else:
-        print(f"Invalid: {permutation} on {keypad}")
+        groupsWithCount[actionGroup + 'A'] += groupsWithCountToType[groupWithCountToType]
+    debug(f"Need to type {toType} for {groupWithCountToType}, actionGroups: {actionGroups}")
+  debug(f"New groups with counts: {groupsWithCount}")
 
-  shortestOptions = []
-  for option in options:
-    if len(option) == shortestCode and not option in shortestOptions:
-      shortestOptions.append(option)
+  if keypad == directionalKeypads:
+    return groupsWithCount
+  else:
+    return countGroupsToType(groupsWithCount, keypad + 1, directionalKeypads)
 
-    print(f"{shortestOptions} are the shortest options to type {codesToType} on {keypad}; overall were {len(options)} options found")
-  return shortestOptions
+
+def typeIn(code, keypad, doValidation, origInFocus, directionalKeypads):
+  debug(f"Typing {code} on {keypad} with length {len(code)}")
+  if keypad == 1:
+    debug("")
+
+  toType = ""
+  inFocus = origInFocus # 'A'
+  for i, c in enumerate(code):
+    if i % 10000000 == -1:
+      print(f"Finding routes for {i}th of {len(code)} chars on keypad {keypad} ({(100*i)//len(code)}%)")
+    toType += findRoutes(inFocus, c, keypad == 1)
+    #for route in findRoutes(inFocus, c, keypad == 1):
+    #  routesForC.append(route)
+    inFocus = c
+
+
+  if DEBUG: debug(f" Need to type in {toType} for {code} on {keypad}")
+  if doValidation:
+    if validate(toType, keypad == 1, origInFocus) == '?':
+      print(f"Invalid sequence detected in {toType} with focus on {origInFocus} on {keypad}")
+      return []
+
+  if keypad == directionalKeypads:
+    if doValidation:
+      if code == "029A":
+        debug(f"Expected to type <vA<AA>>^AvAA<^A>A<v<A>>^AvA^A<vA>^A<v<A>^A>AAvA^A<v<A>A>^AAAvA<^A>A, length {len("<vA<AA>>^AvAA<^A>A<v<A>>^AvA^A<vA>^A<v<A>^A>AAvA^A<v<A>A>^AAAvA<^A>A")}")
+      else:
+        debug(f"Expected length: Code 1 = 68, Code 2 = 60, Code 3 = 68, Code 4 = 64, Code 5 = 64")
+    return [toType] # toType
+  else:
+    if code == "029A":
+      if keypad == 2: debug(f"Expected to type v<<A>>^A<A>AvA<^AA>A<vAAA>^A, length {len("v<<A>>^A<A>AvA<^AA>A<vAAA>^A")}")
+      if keypad == 1: debug(f"Expected to type <A^A>^^AvvvA, length {len("<A^A>^^AvvvA")}")
+
+    innerOptions = typeIn(toType, keypad + 1, doValidation, 'A', directionalKeypads)
+    if innerOptions == []:
+      print(f"Invalid sequence found in {toType}  with focus {'A'} on {keypad + 1}")
+      return []
+    return innerOptions
+
+def shortestOption(options):
+  shortest = -1
+  for i, option in enumerate(options):
+    debug(f"Option {i} of {len(options)} with length {len(option)}: {option}")
+    if shortest == -1 or len(option) < len(options[shortest]):
+      shortest = i
+  return options[shortest]
+
+def longestOption(options):
+  longest = -1
+  for i, option in enumerate(options):
+    debug(f"Option {i} of {len(options)} with length {len(option)}: {option}")
+    if longest == -1 or len(option) > len(options[longest]):
+      longest = i
+  return options[longest]
 
 def complexity(code, toType):
   numericPart = ""
   for c in code:
-    if c in ['0', '1','2','3','4','5','6','7','8','9']:
+    if c in ['0','1','2','3','4','5','6','7','8','9']:
       numericPart += c
-  debug(f"Numeric part in {code} is {numericPart}")
+  #debug(f"Numeric part in {code} is {numericPart}")
   return int(numericPart) * len(toType)
 
-def typeCodes(codes):
-  toTypeForCodes = []
-  for code in codes:
-    print(f"OUTER: {code} from {codes}")
-    toType = typeCode([code], 4)
-    print(f"I need to type {toType} for code {code}")
-    #return ""
-    toTypeForCodes.append(toType)
+def groupComplexity(code, groupsWithCount):
+  numericPart = ""
+  for c in code:
+    if c in ['0','1','2','3','4','5','6','7','8','9']:
+      numericPart += c
+  #debug(f"Numeric part in {code} is {numericPart}")
+  codeLength = 0
+  for groupWithCount in groupsWithCount:
+    codeLength += len(groupWithCount) * groupsWithCount[groupWithCount]
+  return int(numericPart) * codeLength
 
-  totalComplexity = 0
-  for i in range(len(codes)):
-    # use first code for complexity computation
-    totalComplexity += complexity(codes[i], toTypeForCodes[i][0])
-
-  return totalComplexity
+def extractGroupsWithCount(toType):
+  groupsWithCount = {}
+  actionGroups = toType.split('A')
+  for actionGroup in actionGroups:
+    if not actionGroup + 'A' in groupsWithCount:
+      groupsWithCount[actionGroup + 'A'] = 1
+    else:
+      groupsWithCount[actionGroup + 'A'] += 1
+  return groupsWithCount
 
 def part1(useRealData):
   print("Day " + DAY + ", Part 1")
 
   codes = fetchData(DAY, useRealData)
 
-  totalComplexity = typeCodes(codes)
+  totalComplexity = 0
+  directionalKeypads = 2+1
+  for code in codes:
+    inFocus = 'A'
+    result = ""
+    for c in code:
+      toType = typeIn(c, 1, True or not useRealData, inFocus, directionalKeypads)
+      inFocus = c
+      shortest = shortestOption(toType)
+      debug(f"Shortest option from {toType} is {shortest}")
+      result += shortest
+    groupsWithCount = extractGroupsWithCount(result)
+    print(f"CHECK: Groups with count: {groupsWithCount} for {result}")
+    totalComplexity += complexity(code, result)
 
   print(f"Result for part 1: {str(totalComplexity)}")
+  print(f"Expected:          126384")
 
 def part2(useRealData):
   print("Day " + DAY + ", Part 2")
 
   codes = fetchData(DAY, useRealData)
 
-  totalComplexity = typeCodes(codes)
+  totalComplexity = 0
+  directionalKeypads = 25+1
+  for code in codes:
+    inFocus = 'A'
+    result = ""
+    #code = "<vA<AA>>^AAvA<^A>AvA^A"
+    groupsToType = countGroupsToType({code: 1}, 1, directionalKeypads)
+    print(f"Need to type {groupsToType} for {code}")
+    totalComplexity += groupComplexity(code, groupsToType)
 
   print(f"Result for part 2: {str(totalComplexity)}")
 
+def reverse(option, keypad, inFocus):
+  result = ""
+  typed = ""
+  for c in option:
+    if c == 'A':
+      result += typed
+    else:
+      typed = validate(c, keypad == 1, inFocus)
+      #print(f"Typing {c} from {option} with focus on {inFocus} -> {typed}")
+      inFocus = typed
+  return result
+
 def solve():
+  # new approach - simple count groups, and their length on the next level
   seq = "<^<A"
-  print(f"Permutations for {seq}: {permute(seq)}")
+  seq = "v<A<AA>>^AvAA^<A>Av<<A>>^AvA^Av<<A>>^AAv<A>A^A<A>Av<A<A>>^AAA<Av>A^A"
+  #print(f"Permutations for {seq}: {permuteSequence(seq,3)}")
   part1(False)
+  part1(True)
+  # attempt 1: 165516
+  # attempt 2: 166048
+  # attempt 3: 164684
+  # attempt 4: 161952
+  # attempt 5: 157908
+
+  #typeIn("3", 1, False, 'A')
+  #typeIn("7", 1, False, '3')
+  #typeIn("9", 1, False, '7')
+  #typeIn("A", 1, False, '9')
+  #print(typeIn("<", 3, True, 'A'))
+  #+shortestOption(typeIn("2", 1, True, '0'))+shortestOption(typeIn("9", 1, True, '2'))+shortestOption(typeIn("A", 1, True, '9')))
   #part2(False)
+  part2(True)
+  return
+  toType = typeIn("4", 1, True or not useRealData, "3", 4)
+  shortest = shortestOption(toType)
+  longest = longestOption(toType)
+  debug(f"Shortest option from {toType} is {shortest} and longest is {longest}")
+  for option in toType:
+    result = reverse(option, 4, "A")
+    result2 = reverse(result, 3, "A")
+    result3 = reverse(result2, 2, "A")
+    result4 = reverse(result3, 1, "3")
+    print(f"{option} -> {result} -> {result2} -> {result3} ({len(option)} vs {len(result)} vs {len(result2)} vs {len(result3)})")
+
+  # likely best to start from scratch :-o
+  # 
